@@ -834,6 +834,7 @@ const txtCuadrante = document.getElementById('raw-cuadrante').value.trim();
 const txtAvaya = document.getElementById('raw-avaya').value.trim();
 const horaConsulta = document.getElementById('hora-consulta').value;
 const minsActual = timeToMins(horaConsulta);
+const fechaSistema = new Date().toISOString().split('T')[0];
 
 const boxC = document.getElementById('raw-cuadrante');
 const boxA = document.getElementById('raw-avaya');
@@ -929,7 +930,10 @@ if (esSupervisor) {
         estadoHTML='<span class="pill bg-sup">SUPERVISOR</span>';
         filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
     } else {
-        estadoHTML='<span class="pill bg-err">AUSENCIA SUP.</span>';
+        const incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
+        estadoHTML = incidenciaActiva
+            ? `<span class="pill bg-err">${formatearIncidenciaParaEstado(incidenciaActiva)}</span>`
+            : '<span class="pill bg-err">AUSENCIA SUP.</span>';
         claseCSS='row-absent'; filterGroup='AUSENCIA'; cAus++; g_wp.s_aus++;
     }
 } else if (esGTS) {
@@ -946,7 +950,10 @@ if (esSupervisor) {
         estadoHTML='<span class="pill bg-ok">PRESENTE</span>';
         filterGroup='PRESENTE'; cPres++; g_wp.g_real++;
     } else {
-        estadoHTML='<span class="pill bg-err">AUSENCIA</span>';
+        const incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
+        estadoHTML = incidenciaActiva
+            ? `<span class="pill bg-err">${formatearIncidenciaParaEstado(incidenciaActiva)}</span>`
+            : '<span class="pill bg-err">AUSENCIA</span>';
         claseCSS='row-absent'; filterGroup='AUSENCIA'; cAus++; g_wp.g_aus++;
     }
 }
@@ -1250,6 +1257,26 @@ function inicializarIncidencias() {
 
 function guardarIncidenciasLocales() {
     localStorage.setItem('wfm_incidencias_v6', JSON.stringify(g_incidencias));
+}
+
+function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
+    if (!pin || !fechaConsulta || !horaConsulta) return null;
+    const incidencia = g_incidencias.find(inc => {
+        if (inc.pin !== pin) return false;
+        if (inc.fecha !== fechaConsulta) return false;
+        if (!inc.hora_inicio && !inc.hora_fin) return true;
+        if (inc.hora_inicio && inc.hora_fin) {
+            return horaConsulta >= inc.hora_inicio && horaConsulta < inc.hora_fin;
+        }
+        return false;
+    });
+    return incidencia || null;
+}
+
+function formatearIncidenciaParaEstado(inc) {
+    if (!inc) return '';
+    const horario = inc.hora_inicio && inc.hora_fin ? `${inc.hora_inicio}-${inc.hora_fin}` : 'Día completo';
+    return `AUSENCIA JUSTIFICADA - ${inc.tipo} ${horario}`;
 }
 
 function abrirModalIncidencias() {
