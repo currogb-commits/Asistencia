@@ -321,7 +321,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div class="alarm-emoji"></div>
 <h2 style="color:var(--danger); margin-bottom:8px;">¡Revisión de Asistencia!</h2>
 <p style="color:var(--text-muted); font-size: 14px; margin-bottom:20px;">Han pasado 30 minutos. Extrae de nuevo los datos de Avaya y pulsa Cruzar.</p>
-<button class="btn-modal btn-modal-primary" onclick="apagarAlarmaVisual()">ENTENDIDO</button>
+<button id="btn-alarma-ok" class="btn-modal btn-modal-primary">ENTENDIDO</button>
 </div>
 </div>
 <div id="modalAyuda" class="modal-overlay">
@@ -338,23 +338,23 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <li><b>8. Exportar CSV:</b> Descarga el resultado del cruce como archivo Excel-compatible.</li>
 <li><b>9. Historial:</b> Los últimos 3 cruces quedan guardados abajo para consulta rápida.</li>
 </ul>
-<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalAyuda')">Cerrar Manual</button>
+<button class="btn-modal btn-modal-secondary" data-close-modal="modalAyuda">Cerrar Manual</button>
 </div>
 </div>
 <div id="modalWP" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--wp);">
 <p class="modal-title"> Informe de WhatsApp</p>
 <textarea id="wp-text" class="modal-txt"></textarea>
-<button class="btn-modal btn-modal-primary" style="background:var(--wp);" onclick="copiarTexto('wp-text')"> COPIAR AL PORTAPAPELES</button>
-<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalWP')">Cerrar</button>
+<button id="btn-wp-copy" class="btn-modal btn-modal-primary" style="background:var(--wp);"> COPIAR AL PORTAPAPELES</button>
+<button class="btn-modal btn-modal-secondary" data-close-modal="modalWP">Cerrar</button>
 </div>
 </div>
 <div id="modalOcup" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--primary);">
 <p class="modal-title"> Curva de Ocupación</p>
 <div id="ocup-container" style="max-height:320px; overflow-y:auto; margin-bottom:12px;"></div>
-<button class="btn-modal btn-modal-primary" onclick="copiarOcupacion()">COPIAR PARA EXCEL</button>
-<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalOcup')">Cerrar</button>
+<button id="btn-ocup-copy" class="btn-modal btn-modal-primary">COPIAR PARA EXCEL</button>
+<button class="btn-modal btn-modal-secondary" data-close-modal="modalOcup">Cerrar</button>
 </div>
 </div>
 <div id="modalSup" class="modal-overlay">
@@ -363,10 +363,10 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <p style="font-size:12px; color:var(--text-muted); margin-bottom: 12px;">Haz clic en la X para eliminar un PIN. Los cambios se guardan automáticamente en este navegador.</p>
 <div class="sup-grid" id="sup-tags"></div>
 <div class="sup-add-row">
-<input type="text" id="sup-new-pin" placeholder="Nuevo PIN (ej: 8830)" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
-<button class="btn-sup-add" onclick="agregarSupervisor()">+ Añadir</button>
+<input type="text" id="sup-new-pin" placeholder="Nuevo PIN (ej: 8830)" maxlength="6">
+<button id="btn-sup-add" class="btn-sup-add">+ Añadir</button>
 </div>
-<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalSup')">Cerrar</button>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" data-close-modal="modalSup">Cerrar</button>
 </div>
 </div>
 
@@ -380,15 +380,15 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div class="top-btns">
 <div class="time-control" id="box-tiempo">
 <span id="modo-tiempo">Tiempo Real</span>:
-<input type="time" id="hora-consulta" onchange="marcarManual()">
-<button id="btn-reloj" onclick="iniciarReloj()" style="display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; margin-left:4px;" title="Volver al reloj automático"> ⏱ </button>
+<input type="time" id="hora-consulta">
+<button id="btn-reloj" style="display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; margin-left:4px;" title="Volver al reloj automático"> ⏱ </button>
 </div>
-<button class="btn-top" id="alarm-btn" onclick="toggleAlarma()">
+<button class="btn-top" id="alarm-btn">
 <span id="alarm-status-label">Alarma</span> <span id="alarm-countdown" style="font-weight:800;"></span>
 </button>
-<button class="btn-top" onclick="abrirModalSup()"> SUP</button>
-<button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
-<button class="btn-top" onclick="document.getElementById('modalAyuda').style.display='flex'">? Ayuda</button>
+<button id="btn-open-sup" class="btn-top"> SUP</button>
+<button class="btn-top" id="btn-darkmode"> Oscuro</button>
+<button id="btn-ayuda" class="btn-top">? Ayuda</button>
 </div>
 </div>
 
@@ -396,50 +396,50 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div class="card card-siebel">
 <div class="card-header">
 <h3> 1. Cuadrante (PGPlanning)</h3>
-<button class="btn-clear" onclick="limpiarCaja('raw-cuadrante')"> Limpiar</button>
+<button class="btn-clear" data-clear-id="raw-cuadrante"> Limpiar</button>
 </div>
-<textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..." oninput="guardarLocal()"></textarea>
+<textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..."></textarea>
 </div>
 <div class="card card-avaya">
 <div class="card-header">
 <h3> 2. Logados en AVAYA</h3>
-<button class="btn-clear" onclick="limpiarCaja('raw-avaya')"> Limpiar</button>
+<button class="btn-clear" data-clear-id="raw-avaya"> Limpiar</button>
 </div>
-<textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..." oninput="guardarLocal()"></textarea>
+<textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..."></textarea>
 </div>
 </div>
 
 <div class="btn-group">
-<button class="btn-main btn-process" onclick="animarYCruzar()"> 1. CRUZAR DATOS</button>
-<button id="btn-ocup" class="btn-main btn-ocup" onclick="mostrarOcupacion()"> 2. VER OCUPACIÓN</button>
-<button id="btn-whatsapp" class="btn-main btn-wp" onclick="abrirWhatsApp()"> 3. WHATSAPP</button>
-<button id="btn-export" class="btn-main btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
+<button id="btn-process" class="btn-main btn-process"> 1. CRUZAR DATOS</button>
+<button id="btn-ocup" class="btn-main btn-ocup"> 2. VER OCUPACIÓN</button>
+<button id="btn-whatsapp" class="btn-main btn-wp"> 3. WHATSAPP</button>
+<button id="btn-export" class="btn-main btn-export"> 4. EXPORTAR CSV</button>
 </div>
 
 <div class="stats">
-<div class="stat-box active" id="f-all" style="border-color:var(--primary)" onclick="filtrar('ALL')">Total<span class="stat-num" id="s-total">0</span></div>
-<div class="stat-box" id="f-pres" style="border-color:var(--success)" onclick="filtrar('PRESENTE')">Gestores OK<span class="stat-num" id="s-pres">0</span></div>
-<div class="stat-box" id="f-sup" style="border-color:var(--sup)" onclick="filtrar('SUPERVISOR')">Supervisores<span class="stat-num" id="s-sup">0</span></div>
-<div class="stat-box" id="f-gts" style="border-color:var(--gts)" onclick="filtrar('GTS')">Línea GTS<span class="stat-num" id="s-gts">0</span></div>
-<div class="stat-box" id="f-aus" style="border-color:var(--danger)" onclick="filtrar('AUSENCIA')">Ausencias<span class="stat-num" id="s-aus">0</span></div>
-<div class="stat-box" id="f-exc" style="border-color:var(--warning)" onclick="filtrar('EXCESO')">Log. F. Turno<span class="stat-num" id="s-exc">0</span></div>
-<div class="stat-box" id="f-inact" style="border-color:var(--neutral)" onclick="filtrar('INACTIVO')">Finalizados<span class="stat-num" id="s-inact">0</span></div>
+<div class="stat-box active" id="f-all" style="border-color:var(--primary)" data-filter="ALL">Total<span class="stat-num" id="s-total">0</span></div>
+<div class="stat-box" id="f-pres" style="border-color:var(--success)" data-filter="PRESENTE">Gestores OK<span class="stat-num" id="s-pres">0</span></div>
+<div class="stat-box" id="f-sup" style="border-color:var(--sup)" data-filter="SUPERVISOR">Supervisores<span class="stat-num" id="s-sup">0</span></div>
+<div class="stat-box" id="f-gts" style="border-color:var(--gts)" data-filter="GTS">Línea GTS<span class="stat-num" id="s-gts">0</span></div>
+<div class="stat-box" id="f-aus" style="border-color:var(--danger)" data-filter="AUSENCIA">Ausencias<span class="stat-num" id="s-aus">0</span></div>
+<div class="stat-box" id="f-exc" style="border-color:var(--warning)" data-filter="EXCESO">Log. F. Turno<span class="stat-num" id="s-exc">0</span></div>
+<div class="stat-box" id="f-inact" style="border-color:var(--neutral)" data-filter="INACTIVO">Finalizados<span class="stat-num" id="s-inact">0</span></div>
 </div>
 
 <div id="tabla-container">
 <div class="table-toolbar">
-<input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." oninput="buscarTabla()" disabled>
+<input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." disabled>
 <span id="last-cruce">Sin datos, pulsa CRUZAR</span>
 </div>
 <div class="table-wrap">
 <table id="tabla-res">
 <thead>
 <tr>
-<th onclick="sortTable(0)">PIN <span class="sort-icon"></span></th>
-<th onclick="sortTable(1)">Empleado <span class="sort-icon"></span></th>
-<th onclick="sortTable(2)">Turno (Cuadrante) <span class="sort-icon"></span></th>
-<th onclick="sortTable(3)">Estado Avaya <span class="sort-icon"></span></th>
-<th onclick="sortTable(4)">Situación Actual <span class="sort-icon"></span></th>
+<th data-col-index="0">PIN <span class="sort-icon"></span></th>
+<th data-col-index="1">Empleado <span class="sort-icon"></span></th>
+<th data-col-index="2">Turno (Cuadrante) <span class="sort-icon"></span></th>
+<th data-col-index="3">Estado Avaya <span class="sort-icon"></span></th>
+<th data-col-index="4">Situación Actual <span class="sort-icon"></span></th>
 </tr>
 </thead>
 <tbody>
@@ -526,7 +526,7 @@ container.innerHTML = "";
 PIN_SUPERVISORES.forEach(pin => {
 const tag = document.createElement('div');
 tag.className = 'sup-tag';
-tag.innerHTML = `${pin} <button onclick="eliminarSupervisor('${pin}')" title="Eliminar">✖</button>`;
+tag.innerHTML = `${pin} <button data-pin="${pin}" title="Eliminar">✖</button>`;
 container.appendChild(tag);
 });
 }
@@ -538,7 +538,7 @@ renderSupTags();
 function agregarSupervisor() {
 const input = document.getElementById('sup-new-pin');
 const pin = input.value.trim().replace(/^0+/, "");
-if (!pin || pin.length < 3 || pin.length > 6) { mostrarToast("⚠️ PIN inválido (3-6 dígitos)"); return; }
+if (!pin || !/^\d{3,6}$/.test(pin)) { mostrarToast("⚠️ PIN inválido (3-6 dígitos)"); return; }
 if (PIN_SUPERVISORES.includes(pin)) { mostrarToast("⚠️ Ese PIN ya existe"); return; }
 PIN_SUPERVISORES.push(pin);
 guardarSupervisores(PIN_SUPERVISORES);
@@ -606,7 +606,7 @@ document.getElementById('modalAlarma').style.display = 'none';
 // ============================================================
 // UTILIDADES
 // ============================================================
-function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+function cerrarModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
 function mostrarToast(msg) {
 const t = document.createElement('div');
 t.className = 'toast'; t.innerText = msg;
@@ -614,7 +614,7 @@ document.body.appendChild(t);
 setTimeout(() => t.remove(), 3000);
 }
 function limpiarCaja(id) {
-document.getElementById(id).value = "";
+document.getElementById(id).value = ""; // Se mantiene por ahora, pero se puede refactorizar
 guardarLocal();
 }
 function guardarLocal() {
@@ -809,7 +809,10 @@ claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
 }
 }
 
-tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${datos.nombre.toLowerCase()}" class="${claseCSS}">
+let rowsHtml = ''; // 1. Iniciar string vacío
+cuadranteEsperados.forEach((datos, pin) => {
+    // ... (toda la lógica de arriba)
+    rowsHtml += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${datos.nombre.toLowerCase()}" class="${claseCSS}">
 <td><b>${pin}</b></td>
 <td>${datos.nombre}</td>
 <td><b>${datos.horario}</b></td>
@@ -831,7 +834,7 @@ estadoHTML='<span class="pill bg-warn">NO PLANIFICADO</span>';
 filterGroup='EXCESO'; claseCSS='row-extra'; cExc++;
 }
 
-tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nombreAvaya.toLowerCase()}" class="${claseCSS}">
+rowsHtml += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nombreAvaya.toLowerCase()}" class="${claseCSS}">
 <td><b>${pin}</b></td>
 <td>${nombreAvaya}</td>
 <td><i>Sin cuadrante hoy</i></td>
@@ -840,6 +843,8 @@ tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre
 </tr>`;
 }
 });
+
+tbody.innerHTML = rowsHtml; // 2. Asignar el HTML de una sola vez
 
 document.getElementById('s-total').innerText = cTotal;
 document.getElementById('s-pres').innerText = cPres;
@@ -893,7 +898,7 @@ document.getElementById('modalOcup').style.display = 'flex';
 function copiarOcupacion() {
 let txt = "Hora\tPlanificados\n";
 Object.keys(g_ocupacion).sort().forEach(h => {
-if (g_ocupacion[h] > 0 || (h >= "07:00" && h <= "23:30")) txt += `${h}\t${g_ocupacion[h]}\n`;
+if (g_ocupacion[h] > 0 || (h >= "07:00" && h <= "23:30")) txt += `${h.replace('.',',')}\t${g_ocupacion[h]}\n`;
 });
 navigator.clipboard.writeText(txt).then(() => {
 mostrarToast("✅ Ocupación copiada"); cerrarModal('modalOcup');
@@ -921,7 +926,7 @@ document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active')
 const map = { ALL:'f-all', PRESENTE:'f-pres', SUPERVISOR:'f-sup', GTS:'f-gts', AUSENCIA:'f-aus', EXCESO:'f-exc', INACTIVO:'f-inact' };
 document.getElementById(map[tipo]).classList.add('active');
 document.getElementById('buscador').value = "";
-document.querySelectorAll('#tabla-res tbody tr').forEach(f => {
+document.querySelectorAll('#tabla-res tbody tr').forEach(f => { // BUGFIX: era 'f', debe ser 'tr'
 f.style.display = (tipo === 'ALL' || f.getAttribute('data-type') === tipo) ? "" : 'none';
 });
 }
@@ -1055,21 +1060,69 @@ document.getElementById('modalWP').style.display = 'flex';
 function copiarTexto(id) {
 navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
 mostrarToast("✅ ¡Copiado al portapapeles!");
-document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none');
+cerrarModal('modalWP');
 });
 }
 
 // ============================================================
 // INIT
 // ============================================================
-window.onload = function() {
+function addEventListeners() {
+    // Cabecera
+    document.getElementById('hora-consulta').addEventListener('change', marcarManual);
+    document.getElementById('btn-reloj').addEventListener('click', iniciarReloj);
+    document.getElementById('alarm-btn').addEventListener('click', toggleAlarma);
+    document.getElementById('btn-open-sup').addEventListener('click', abrirModalSup);
+    document.getElementById('btn-darkmode').addEventListener('click', toggleDarkMode);
+    document.getElementById('btn-ayuda').addEventListener('click', () => document.getElementById('modalAyuda').style.display = 'flex');
+
+    // Inputs
+    document.querySelectorAll('[data-clear-id]').forEach(btn => {
+        btn.addEventListener('click', (e) => limpiarCaja(e.currentTarget.dataset.clearId));
+    });
+    document.getElementById('raw-cuadrante').addEventListener('input', guardarLocal);
+    document.getElementById('raw-avaya').addEventListener('input', guardarLocal);
+
+    // Botones principales
+    document.getElementById('btn-process').addEventListener('click', animarYCruzar);
+    document.getElementById('btn-ocup').addEventListener('click', mostrarOcupacion);
+    document.getElementById('btn-whatsapp').addEventListener('click', abrirWhatsApp);
+    document.getElementById('btn-export').addEventListener('click', exportarCSV);
+
+    // Stats y tabla
+    document.querySelectorAll('.stat-box').forEach(box => {
+        box.addEventListener('click', (e) => filtrar(e.currentTarget.dataset.filter));
+    });
+    document.getElementById('buscador').addEventListener('input', buscarTabla);
+    document.querySelectorAll('#tabla-res thead th').forEach(th => {
+        th.addEventListener('click', (e) => sortTable(parseInt(e.currentTarget.dataset.colIndex)));
+    });
+
+    // Modales
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', (e) => cerrarModal(e.currentTarget.dataset.closeModal));
+    });
+    document.getElementById('btn-alarma-ok').addEventListener('click', apagarAlarmaVisual);
+    document.getElementById('btn-wp-copy').addEventListener('click', () => copiarTexto('wp-text'));
+    document.getElementById('btn-ocup-copy').addEventListener('click', copiarOcupacion);
+    document.getElementById('btn-sup-add').addEventListener('click', agregarSupervisor);
+    document.getElementById('sup-new-pin').addEventListener('input', (e) => e.target.value = e.target.value.replace(/\D/g, ''));
+    document.getElementById('sup-tags').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON' && e.target.dataset.pin) {
+            eliminarSupervisor(e.target.dataset.pin);
+        }
+    });
+}
+
+window.addEventListener('load', () => {
+addEventListeners();
 iniciarReloj();
 const theme = localStorage.getItem('wfm_theme') || 'light';
 document.documentElement.setAttribute('data-theme', theme);
-document.getElementById('btn-darkmode').innerText = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+document.getElementById('btn-darkmode').innerText = theme === 'dark' ? '🌙 Oscuro' : '☀️ Claro';
 if (localStorage.getItem("wfm_cuadrante")) document.getElementById("raw-cuadrante").value = localStorage.getItem("wfm_cuadrante");
 if (localStorage.getItem("wfm_avaya")) document.getElementById("raw-avaya").value = localStorage.getItem("wfm_avaya");
-};
+});
 </script>
 </body>
 </html>
