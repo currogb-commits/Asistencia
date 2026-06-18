@@ -3,7 +3,317 @@
 <head>
 <meta charset="UTF-8">
 <title>Control de Asistencia WFM v5.0</title>
-<link rel="stylesheet" href="style.css">
+<style>
+/* =========================================
+VARIABLES Y TEMAS
+========================================= */
+:root {
+--primary: #2c3e50; --success: #27ae60; --warning: #f39c12;
+--danger: #e74c3c; --gts: #8e44ad; --sup: #2980b9;
+--wp: #25D366; --neutral: #95a5a6;
+--bg: #f0f4f8; --card: #ffffff; --text: #2d3748;
+--text-muted: #718096; --border: #e2e8f0;
+--header-bg: #2c3e50; --header-text: #ffffff;
+--input-bg: #ffffff; --input-border: #cbd5e0;
+--table-hover: #f7fafc; --table-header: #2c3e50;
+--shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.06);
+--shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+--transition: 0.2s ease;
+}
+[data-theme="dark"] {
+--bg: #0f1117; --card: #1a1d27; --text: #e2e8f0;
+--text-muted: #a0aec0; --border: #2d3748;
+--header-bg: #1a1d27; --header-text: #e2e8f0;
+--input-bg: #2d3748; --input-border: #4a5568;
+--table-hover: #2d3748; --table-header: #1a1d27;
+--shadow: 0 4px 6px rgba(0,0,0,0.3);
+--shadow-lg: 0 10px 25px rgba(0,0,0,0.4);
+--primary: #4a90d9;
+}
+/* =========================================
+BASE
+========================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+font-family: 'Segoe UI', system-ui, sans-serif;
+background: var(--bg); color: var(--text);
+min-height: 100vh; padding: 20px;
+transition: background var(--transition), color var(--transition);
+}
+.container { max-width: 1280px; margin: auto; }
+/* =========================================
+CABECERA
+========================================= */
+.header {
+background: var(--card); border-radius: 12px;
+padding: 16px 20px; margin-bottom: 20px;
+box-shadow: var(--shadow);
+display: flex; justify-content: space-between;
+align-items: center; flex-wrap: wrap; gap: 12px;
+border-left: 5px solid var(--success);
+}
+.header-title h1 { font-size: 20px; color: var(--text); font-weight: 700; }
+.header-title p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.top-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* Reloj */
+.time-control {
+display: flex; align-items: center; gap: 8px;
+background: var(--input-bg); padding: 8px 14px;
+border-radius: 8px; border: 2px solid #3498db;
+font-weight: 600; font-size: 13px; color: var(--text);
+transition: border-color var(--transition), background var(--transition);
+}
+.time-control.manual { border-color: #e67e22; background: #fff8f0; }
+[data-theme="dark"] .time-control.manual { background: #2d2417; }
+.time-control input {
+font-size: 14px; font-weight: 700; border: none;
+background: transparent; color: var(--text);
+outline: none; cursor: pointer; width: 70px;
+}
+/* Botones top */
+.btn-top {
+padding: 8px 14px; border-radius: 8px; border: 2px solid var(--border);
+background: var(--card); color: var(--text); font-weight: 600;
+font-size: 12px; cursor: pointer; display: flex;
+align-items: center; gap: 6px; transition: all var(--transition);
+white-space: nowrap;
+}
+.btn-top:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+.btn-top.alarm-active { border-color: var(--danger); color: var(--danger); background: #fff5f5; }
+[data-theme="dark"] .btn-top.alarm-active { background: #2d1515; }
+/* =========================================
+GRID INPUTS
+========================================= */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media(max-width:768px) { .grid-2 {grid-template-columns: 1fr;} }
+.card {
+background: var(--card); padding: 16px; border-radius: 10px;
+box-shadow: var(--shadow);
+transition: background var(--transition);
+}
+.card-siebel { border-top: 4px solid var(--primary); }
+.card-avaya { border-top: 4px solid #3498db; }
+.card-header {
+display: flex; justify-content: space-between;
+align-items: center; margin-bottom: 10px;
+}
+.card-header h3 { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+letter-spacing: 0.5px; }
+.btn-clear {
+background: var(--bg); border: 1px solid var(--border);
+padding: 4px 10px; border-radius: 5px; font-size: 11px;
+cursor: pointer; color: var(--text-muted); transition: all var(--transition);
+}
+.btn-clear:hover { background: var(--danger); color: white; border-color: var(--danger); }
+textarea.data-input {
+width: 100%; height: 110px; border: 1px solid var(--input-border);
+border-radius: 6px; padding: 10px;
+font-family: 'Consolas', monospace; font-size: 11px;
+resize: vertical; background: var(--input-bg); color: var(--text);
+overflow-x: scroll; white-space: pre;
+transition: border-color var(--transition), background var(--transition);
+}
+textarea.data-input:focus {outline: none; border-color: var(--primary); }
+/* =========================================
+BOTONES PRINCIPALES
+========================================= */
+.btn-group { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.btn-main {
+flex: 1; min-width: 140px; color: white; border: none;
+padding: 14px 20px; border-radius: 8px; cursor: pointer;
+font-size: 14px; font-weight: 700; transition: all 0.15s;
+text-align: center; display: flex; align-items: center;
+justify-content: center; gap: 8px;
+}
+.btn-main:active { transform: translateY(3px); filter: brightness(0.9); }
+.btn-process { background: linear-gradient(135deg, #27ae60, #1e8449); box-shadow: 0 4px 0 #155d2e; }
+.btn-process:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.btn-wp { background: linear-gradient(135deg, #25D366, #1da851); box-shadow: 0 4px 0 #128c3a; display: none; }
+.btn-ocup { background: linear-gradient(135deg, #2c3e50, #1a252f); box-shadow: 0 4px 0 #0d1318; display: none; }
+.btn-export { background: linear-gradient(135deg, #16a085, #0e6655); box-shadow: 0 4px 0 #0a4a3d; display: none; }
+/* =========================================
+DASHBOARD STATS
+========================================= */
+.stats {
+display: grid; grid-template-columns: repeat(7, 1fr);
+gap: 10px; margin-bottom: 20px;
+}
+@media(max-width:900px) { .stats { grid-template-columns: repeat(4,1fr); } }
+@media(max-width:500px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stat-box {
+background: var(--card); padding: 12px 8px; border-radius: 10px;
+text-align: center; font-weight: 700; font-size: 11px;
+box-shadow: var(--shadow); cursor: pointer;
+transition: all var(--transition);
+border-bottom: 4px solid transparent; color: var(--text-muted);
+user-select: none;
+}
+.stat-box:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.stat-box.active { color: var(--text); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.stat-num { font-size: 24px; display: block; margin-top: 6px; color: var(--text); font-weight: 800; }
+/* =========================================
+BARRA DE HERRAMIENTAS TABLA
+========================================= */
+.table-toolbar {
+background: var(--card); padding: 12px 16px;
+border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--border);
+display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+.search-box {
+flex: 1; min-width: 200px; padding: 8px 12px;
+border: 1px solid var(--input-border); border-radius: 6px;
+font-size: 13px; background: var(--input-bg); color: var(--text);
+outline: none; transition: border-color var(--transition);
+}
+.search-box:focus { border-color: var(--primary); }
+.search-box::placeholder { color: var(--text-muted); }
+#last-cruce {
+font-size: 12px; color: var(--text-muted);
+padding: 8px 12px; background: var(--bg);
+border-radius: 6px; white-space: nowrap;
+}
+/* ==========================================
+TABLA
+========================================== */
+#tabla-container { transition: opacity 0.3s ease; }
+.table-wrap { overflow-x: auto; border-radius: 0 0 10px 10px; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card); }
+thead th {
+background: var(--table-header); color: white;
+padding: 12px 14px; text-align: left;
+position: sticky; top: 0; z-index: 10;
+cursor: pointer; user-select: none;
+white-space: nowrap; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+thead th:hover {filter: brightness(1.2); }
+thead th .sort-icon { margin-left: 5px; opacity: 0.5; font-size: 10px; }
+thead th.sorted .sort-icon { opacity: 1; }
+tbody tr { transition: background var(--transition); }
+tbody tr:hover { background: var(--table-hover) !important; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.row-absent { background: #fdf2f2; }
+.row-extra { background: #fffbf2; }
+.row-sup { background: #eaf4fb; }
+.row-inactive{ background: var(--bg); color: var(--text-muted); }
+[data-theme="dark"] .row-absent { background: #2d1515; }
+[data-theme="dark"] .row-extra { background: #2d2415; }
+[data-theme="dark"] .row-sup { background: #152535; }
+[data-theme="dark"] .row-inactive{ background: #1a1d27; }
+/* =========================================
+PILLS
+========================================= */
+.pill {
+padding: 4px 10px; border-radius: 20px; font-size: 10px;
+font-weight: 800; color: white; display: inline-block;
+text-align: center; min-width: 95px; letter-spacing: 0.3px;
+}
+.bg-ok { background: var(--success); }
+.bg-err { background: var(--danger); }
+.bg-warn { background: var(--warning); color: #333; }
+.bg-gts { background: var(--gts); }
+.bg-sup { background: var(--sup); }
+.bg-gray { background: var(--neutral); }
+/* =========================================
+HISTORIAL
+========================================= */
+.historial-section {
+margin-top: 20px; background: var(--card);
+border-radius: 10px; padding: 16px; box-shadow: var(--shadow);
+display: none;
+}
+.historial-section h3 { font-size: 13px; color: var(--text-muted); text-transform: uppercase;
+letter-spacing: 0.5px; margin-bottom: 12px; }
+.hist-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+.hist-card {
+flex: 1; min-width: 180px; background: var(--bg);
+border-radius: 8px; padding: 12px; border: 1px solid var(--border);
+cursor: pointer; transition: all var(--transition);
+}
+.hist-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+.hist-card .hist-time {font-size: 16px; font-weight: 800; color: var(--text); }
+.hist-card .hist-data {font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+/* =========================================
+MODALES
+========================================= */
+.modal-overlay {
+position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+display: none; justify-content: center; align-items: center;
+z-index: 1000; padding: 20px;
+}
+.modal-content {
+background: var(--card); padding: 28px; border-radius: 14px;
+width: 520px; max-width: 100%; max-height: 90vh;
+overflow-y: auto; box-shadow: var(--shadow-lg);
+animation: zoomin 0.25s ease;
+}
+@keyframes zoomin { from {transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; color: var(--text); }
+textarea.modal-txt {
+width: 100%; height: 320px; font-family: 'Consolas', monospace;
+font-size: 12px; padding: 12px; box-sizing: border-box;
+border: 1px solid var(--input-border); border-radius: 6px;
+margin-bottom: 12px; resize: vertical;
+background: var(--input-bg); color: var(--text);
+}
+.btn-modal {
+width: 100%; padding: 13px; border-radius: 8px; border: none;
+cursor: pointer; font-weight: 700; font-size: 14px; margin-top: 8px; transition: all var(--transition);
+}
+.btn-modal-primary { background: var(--primary); color: white; }
+.btn-modal-primary:hover { filter: brightness(1.15); }
+.btn-modal-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-modal-secondary:hover { background: var(--border); }
+.table-ocup { width: 100%; font-size: 13px; text-align: center; border-collapse: collapse; }
+.table-ocup th { background: var(--table-header); color: white; padding: 8px; }
+.table-ocup td { border: 1px solid var(--border); padding: 7px; }
+.help-list { padding-left: 5px; list-style: none; }
+.help-list li { margin-bottom: 12px; font-size: 13px; line-height: 1.6; padding: 10px; background: var(--bg); border-radius: 8px; }
+
+/* Modal supervisores */
+.sup-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.sup-tag {
+background: var(--sup); color: white; padding: 5px 10px;
+border-radius: 20px; font-size: 12px; font-weight: 700;
+display: flex; align-items: center; gap: 6px;
+}
+.sup-tag button {
+background: none; border: none; color: white;
+cursor: pointer; font-size: 14px; line-height: 1;
+padding: 0; transition: transform var(--transition);
+}
+.sup-tag button:hover { transform: scale(1.3); }
+.sup-add-row { display: flex; gap: 8px; margin-top: 8px; }
+.sup-add-row input {
+flex: 1; padding: 8px 12px; border: 1px solid var(--input-border);
+border-radius: 6px; font-size: 13px; background: var(--input-bg); color: var(--text); outline: none;
+}
+.sup-add-row input:focus { border-color: var(--sup); }
+.btn-sup-add {
+background: var(--sup); color: white; border: none;
+padding: 8px 14px; border-radius: 6px; cursor: pointer;
+font-weight: 700; font-size: 13px;
+}
+
+/* Modal alarma */
+#modalAlarma { z-index: 9999; }
+.alarm-modal-inner { text-align: center; }
+.alarm-emoji { font-size: 60px; margin-bottom: 10px; animation: pulse 1s infinite; }
+.alarm-emoji::after { content: "⏰"; }
+@keyframes pulse { 0%, 100%{transform:scale(1)} 50% {transform:scale(1.1)}}
+
+/* Notificación toast */
+.toast {
+position: fixed; bottom: 30px; right: 30px;
+background: #333; color: white; padding: 12px 20px;
+border-radius: 8px; font-size: 13px; font-weight: 600;
+z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1;}}
+
+/* Validación vacío */
+.input-error { border-color: var(--danger) !important; }
+</style>
 </head>
 <body>
 <div id="modalAlarma" class="modal-overlay">
@@ -11,7 +321,7 @@
 <div class="alarm-emoji"></div>
 <h2 style="color:var(--danger); margin-bottom:8px;">¡Revisión de Asistencia!</h2>
 <p style="color:var(--text-muted); font-size: 14px; margin-bottom:20px;">Han pasado 30 minutos. Extrae de nuevo los datos de Avaya y pulsa Cruzar.</p>
-<button id="btn-alarma-ok" class="btn-modal btn-modal-primary">ENTENDIDO</button>
+<button class="btn-modal btn-modal-primary" onclick="apagarAlarmaVisual()">ENTENDIDO</button>
 </div>
 </div>
 <div id="modalAyuda" class="modal-overlay">
@@ -28,23 +338,23 @@
 <li><b>8. Exportar CSV:</b> Descarga el resultado del cruce como archivo Excel-compatible.</li>
 <li><b>9. Historial:</b> Los últimos 3 cruces quedan guardados abajo para consulta rápida.</li>
 </ul>
-<button class="btn-modal btn-modal-secondary" data-close-modal="modalAyuda">Cerrar Manual</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalAyuda')">Cerrar Manual</button>
 </div>
 </div>
 <div id="modalWP" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--wp);">
 <p class="modal-title"> Informe de WhatsApp</p>
 <textarea id="wp-text" class="modal-txt"></textarea>
-<button id="btn-wp-copy" class="btn-modal btn-modal-primary" style="background:var(--wp);"> COPIAR AL PORTAPAPELES</button>
-<button class="btn-modal btn-modal-secondary" data-close-modal="modalWP">Cerrar</button>
+<button class="btn-modal btn-modal-primary" style="background:var(--wp);" onclick="copiarTexto('wp-text')"> COPIAR AL PORTAPAPELES</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalWP')">Cerrar</button>
 </div>
 </div>
 <div id="modalOcup" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--primary);">
 <p class="modal-title"> Curva de Ocupación</p>
 <div id="ocup-container" style="max-height:320px; overflow-y:auto; margin-bottom:12px;"></div>
-<button id="btn-ocup-copy" class="btn-modal btn-modal-primary">COPIAR PARA EXCEL</button>
-<button class="btn-modal btn-modal-secondary" data-close-modal="modalOcup">Cerrar</button>
+<button class="btn-modal btn-modal-primary" onclick="copiarOcupacion()">COPIAR PARA EXCEL</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalOcup')">Cerrar</button>
 </div>
 </div>
 <div id="modalSup" class="modal-overlay">
@@ -53,10 +363,10 @@
 <p style="font-size:12px; color:var(--text-muted); margin-bottom: 12px;">Haz clic en la X para eliminar un PIN. Los cambios se guardan automáticamente en este navegador.</p>
 <div class="sup-grid" id="sup-tags"></div>
 <div class="sup-add-row">
-<input type="text" id="sup-new-pin" placeholder="Nuevo PIN (ej: 8830)" maxlength="6">
-<button id="btn-sup-add" class="btn-sup-add">+ Añadir</button>
+<input type="text" id="sup-new-pin" placeholder="Nuevo PIN (ej: 8830)" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+<button class="btn-sup-add" onclick="agregarSupervisor()">+ Añadir</button>
 </div>
-<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" data-close-modal="modalSup">Cerrar</button>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalSup')">Cerrar</button>
 </div>
 </div>
 
@@ -70,15 +380,15 @@
 <div class="top-btns">
 <div class="time-control" id="box-tiempo">
 <span id="modo-tiempo">Tiempo Real</span>:
-<input type="time" id="hora-consulta">
-<button id="btn-reloj" style="display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; margin-left:4px;" title="Volver al reloj automático"> ⏱ </button>
+<input type="time" id="hora-consulta" onchange="marcarManual()">
+<button id="btn-reloj" onclick="iniciarReloj()" style="display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; margin-left:4px;" title="Volver al reloj automático"> ⏱ </button>
 </div>
-<button class="btn-top" id="alarm-btn">
+<button class="btn-top" id="alarm-btn" onclick="toggleAlarma()">
 <span id="alarm-status-label">Alarma</span> <span id="alarm-countdown" style="font-weight:800;"></span>
 </button>
-<button id="btn-open-sup" class="btn-top"> SUP</button>
-<button class="btn-top" id="btn-darkmode"> Oscuro</button>
-<button id="btn-ayuda" class="btn-top">? Ayuda</button>
+<button class="btn-top" onclick="abrirModalSup()"> SUP</button>
+<button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
+<button class="btn-top" onclick="document.getElementById('modalAyuda').style.display='flex'">? Ayuda</button>
 </div>
 </div>
 
@@ -86,50 +396,50 @@
 <div class="card card-siebel">
 <div class="card-header">
 <h3> 1. Cuadrante (PGPlanning)</h3>
-<button class="btn-clear" data-clear-id="raw-cuadrante"> Limpiar</button>
+<button class="btn-clear" onclick="limpiarCaja('raw-cuadrante')"> Limpiar</button>
 </div>
-<textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..."></textarea>
+<textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..." oninput="guardarLocal()"></textarea>
 </div>
 <div class="card card-avaya">
 <div class="card-header">
 <h3> 2. Logados en AVAYA</h3>
-<button class="btn-clear" data-clear-id="raw-avaya"> Limpiar</button>
+<button class="btn-clear" onclick="limpiarCaja('raw-avaya')"> Limpiar</button>
 </div>
-<textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..."></textarea>
+<textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..." oninput="guardarLocal()"></textarea>
 </div>
 </div>
 
 <div class="btn-group">
-<button id="btn-process" class="btn-main btn-process"> 1. CRUZAR DATOS</button>
-<button id="btn-ocup" class="btn-main btn-ocup"> 2. VER OCUPACIÓN</button>
-<button id="btn-whatsapp" class="btn-main btn-wp"> 3. WHATSAPP</button>
-<button id="btn-export" class="btn-main btn-export"> 4. EXPORTAR CSV</button>
+<button class="btn-main btn-process" onclick="animarYCruzar()"> 1. CRUZAR DATOS</button>
+<button id="btn-ocup" class="btn-main btn-ocup" onclick="mostrarOcupacion()"> 2. VER OCUPACIÓN</button>
+<button id="btn-whatsapp" class="btn-main btn-wp" onclick="abrirWhatsApp()"> 3. WHATSAPP</button>
+<button id="btn-export" class="btn-main btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
 </div>
 
 <div class="stats">
-<div class="stat-box active" id="f-all" style="border-color:var(--primary)" data-filter="ALL">Total<span class="stat-num" id="s-total">0</span></div>
-<div class="stat-box" id="f-pres" style="border-color:var(--success)" data-filter="PRESENTE">Gestores OK<span class="stat-num" id="s-pres">0</span></div>
-<div class="stat-box" id="f-sup" style="border-color:var(--sup)" data-filter="SUPERVISOR">Supervisores<span class="stat-num" id="s-sup">0</span></div>
-<div class="stat-box" id="f-gts" style="border-color:var(--gts)" data-filter="GTS">Línea GTS<span class="stat-num" id="s-gts">0</span></div>
-<div class="stat-box" id="f-aus" style="border-color:var(--danger)" data-filter="AUSENCIA">Ausencias<span class="stat-num" id="s-aus">0</span></div>
-<div class="stat-box" id="f-exc" style="border-color:var(--warning)" data-filter="EXCESO">Log. F. Turno<span class="stat-num" id="s-exc">0</span></div>
-<div class="stat-box" id="f-inact" style="border-color:var(--neutral)" data-filter="INACTIVO">Finalizados<span class="stat-num" id="s-inact">0</span></div>
+<div class="stat-box active" id="f-all" style="border-color:var(--primary)" onclick="filtrar('ALL')">Total<span class="stat-num" id="s-total">0</span></div>
+<div class="stat-box" id="f-pres" style="border-color:var(--success)" onclick="filtrar('PRESENTE')">Gestores OK<span class="stat-num" id="s-pres">0</span></div>
+<div class="stat-box" id="f-sup" style="border-color:var(--sup)" onclick="filtrar('SUPERVISOR')">Supervisores<span class="stat-num" id="s-sup">0</span></div>
+<div class="stat-box" id="f-gts" style="border-color:var(--gts)" onclick="filtrar('GTS')">Línea GTS<span class="stat-num" id="s-gts">0</span></div>
+<div class="stat-box" id="f-aus" style="border-color:var(--danger)" onclick="filtrar('AUSENCIA')">Ausencias<span class="stat-num" id="s-aus">0</span></div>
+<div class="stat-box" id="f-exc" style="border-color:var(--warning)" onclick="filtrar('EXCESO')">Log. F. Turno<span class="stat-num" id="s-exc">0</span></div>
+<div class="stat-box" id="f-inact" style="border-color:var(--neutral)" onclick="filtrar('INACTIVO')">Finalizados<span class="stat-num" id="s-inact">0</span></div>
 </div>
 
 <div id="tabla-container">
 <div class="table-toolbar">
-<input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." disabled>
+<input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." oninput="buscarTabla()" disabled>
 <span id="last-cruce">Sin datos, pulsa CRUZAR</span>
 </div>
 <div class="table-wrap">
 <table id="tabla-res">
 <thead>
 <tr>
-<th data-col-index="0">PIN <span class="sort-icon"></span></th>
-<th data-col-index="1">Empleado <span class="sort-icon"></span></th>
-<th data-col-index="2">Turno (Cuadrante) <span class="sort-icon"></span></th>
-<th data-col-index="3">Estado Avaya <span class="sort-icon"></span></th>
-<th data-col-index="4">Situación Actual <span class="sort-icon"></span></th>
+<th onclick="sortTable(0)">PIN <span class="sort-icon"></span></th>
+<th onclick="sortTable(1)">Empleado <span class="sort-icon"></span></th>
+<th onclick="sortTable(2)">Turno (Cuadrante) <span class="sort-icon"></span></th>
+<th onclick="sortTable(3)">Estado Avaya <span class="sort-icon"></span></th>
+<th onclick="sortTable(4)">Situación Actual <span class="sort-icon"></span></th>
 </tr>
 </thead>
 <tbody>
@@ -143,7 +453,623 @@
 <h3> Historial de cruces recientes</h3>
 <div class="hist-grid" id="hist-grid"></div>
 </div>
-</div>
-<script src="app.js" defer></script>
+</div><script>
+// ============================================================
+// LISTA DE SUPERVISORES (editable desde UI, persistida en localStorage)
+// ============================================================
+const SUP_DEFAULT = ["8809","8802","8806","8804","8818","8805","8817","8822","8814","8819","8816","8815","8826","8811","8813","8807","8808","8810"];
+
+function cargarSupervisores() {
+const saved = localStorage.getItem("wfm_supervisores");
+return saved ? JSON.parse(saved) : [...SUP_DEFAULT];
+}
+function guardarSupervisores(arr) {
+localStorage.setItem("wfm_supervisores", JSON.stringify(arr));
+}
+let PIN_SUPERVISORES = cargarSupervisores();
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+// ⚠️ CORRECCIÓN: Separamos totalmente los contadores GTS de los demás
+let g_wp = { g_plan:0, g_real:0, g_aus:0, gts_plan:0, gts_real:0, s_plan:0, s_real:0, s_aus:0 };
+let g_entradas = {}, g_salidas = {}, g_ocupacion = {};
+let relojInterval = null, alarmTimer = null, countdownInterval = null;
+let alarmEnd = null;
+let audioCtx = null;
+let sortDir = {}; // columna -> asc/desc
+let g_historial = []; // últimos 3 cruces
+
+// ============================================================
+// RELOJ
+// ============================================================
+function iniciarReloj() {
+actualizarReloj();
+if (relojInterval) clearInterval(relojInterval);
+relojInterval = setInterval(actualizarReloj, 10000);
+document.getElementById('modo-tiempo').innerText = "Tiempo Real";
+document.getElementById('box-tiempo').classList.remove('manual');
+document.getElementById('btn-reloj').style.display = "none";
+}
+function actualizarReloj() {
+const now = new Date();
+document.getElementById('hora-consulta').value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+function marcarManual() {
+if (relojInterval) clearInterval(relojInterval);
+document.getElementById('modo-tiempo').innerText = "Modo Manual";
+document.getElementById('box-tiempo').classList.add('manual');
+document.getElementById('btn-reloj').style.display = "inline-block";
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function toggleDarkMode() {
+const html = document.documentElement;
+const isDark = html.getAttribute('data-theme') === 'dark';
+html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+document.getElementById('btn-darkmode').innerText = isDark ? '☀️ Claro' : '🌙 Oscuro';
+localStorage.setItem('wfm_theme', isDark ? 'light' : 'dark');
+}
+
+// ============================================================
+// MODAL SUPERVISORES
+// ============================================================
+function abrirModalSup() {
+renderSupTags();
+document.getElementById('modalSup').style.display = 'flex';
+}
+function renderSupTags() {
+const container = document.getElementById('sup-tags');
+container.innerHTML = "";
+PIN_SUPERVISORES.forEach(pin => {
+const tag = document.createElement('div');
+tag.className = 'sup-tag';
+tag.innerHTML = `${pin} <button onclick="eliminarSupervisor('${pin}')" title="Eliminar">✖</button>`;
+container.appendChild(tag);
+});
+}
+function eliminarSupervisor(pin) {
+PIN_SUPERVISORES = PIN_SUPERVISORES.filter(p => p !== pin);
+guardarSupervisores(PIN_SUPERVISORES);
+renderSupTags();
+}
+function agregarSupervisor() {
+const input = document.getElementById('sup-new-pin');
+const pin = input.value.trim().replace(/^0+/, "");
+if (!pin || pin.length < 3 || pin.length > 6) { mostrarToast("⚠️ PIN inválido (3-6 dígitos)"); return; }
+if (PIN_SUPERVISORES.includes(pin)) { mostrarToast("⚠️ Ese PIN ya existe"); return; }
+PIN_SUPERVISORES.push(pin);
+guardarSupervisores(PIN_SUPERVISORES);
+renderSupTags();
+input.value = "";
+mostrarToast("✅ Supervisor añadido: " + pin);
+}
+
+// ============================================================
+// ALARMA
+// ============================================================
+function iniciarAudio() {
+if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function hacerBip() {
+if (!audioCtx) return;
+const osc = audioCtx.createOscillator();
+const gain = audioCtx.createGain();
+osc.connect(gain); gain.connect(audioCtx.destination);
+osc.type = 'square';
+osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+}
+function toggleAlarma() {
+const btn = document.getElementById('alarm-btn');
+if (alarmTimer) {
+clearInterval(alarmTimer); alarmTimer = null;
+clearInterval(countdownInterval); countdownInterval = null;
+alarmEnd = null;
+btn.classList.remove('alarm-active');
+document.getElementById('alarm-status-label').innerText = "Alarma";
+document.getElementById('alarm-countdown').innerText = "";
+mostrarToast("🔔 Alarma desactivada");
+} else {
+iniciarAudio(); hacerBip();
+btn.classList.add('alarm-active');
+document.getElementById('alarm-status-label').innerText = "";
+alarmEnd = Date.now() + 30 * 60 * 1000;
+actualizarCountdown();
+countdownInterval = setInterval(actualizarCountdown, 1000);
+alarmTimer = setInterval(() => {
+hacerBip(); setTimeout(hacerBip, 600);
+document.getElementById('modalAlarma').style.display = 'flex';
+alarmEnd = Date.now() + 30 * 60 * 1000;
+}, 30 * 60 * 1000);
+mostrarToast("⏰ Alarma activada. Aviso en 30 minutos.");
+}
+}
+function actualizarCountdown() {
+if (!alarmEnd) return;
+const restMs = alarmEnd - Date.now();
+if (restMs <= 0) { document.getElementById('alarm-countdown').innerText = "00:00"; return; }
+const m = Math.floor(restMs / 60000);
+const s = Math.floor((restMs % 60000) / 1000);
+document.getElementById('alarm-countdown').innerText = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function apagarAlarmaVisual() {
+document.getElementById('modalAlarma').style.display = 'none';
+}
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+function mostrarToast(msg) {
+const t = document.createElement('div');
+t.className = 'toast'; t.innerText = msg;
+document.body.appendChild(t);
+setTimeout(() => t.remove(), 3000);
+}
+function limpiarCaja(id) {
+document.getElementById(id).value = "";
+guardarLocal();
+}
+function guardarLocal() {
+clearTimeout(guardarLocal._t);
+guardarLocal._t = setTimeout(() => {
+localStorage.setItem("wfm_cuadrante", document.getElementById("raw-cuadrante").value);
+localStorage.setItem("wfm_avaya", document.getElementById("raw-avaya").value);
+}, 400);
+}
+
+// ============================================================
+// MOTOR TEMPORAL
+// ============================================================
+function timeToMins(tStr) {
+const [h, m] = tStr.split(':').map(Number);
+return h * 60 + m;
+}
+
+function evaluarTurno(horaActual, inicio, fin) {
+let tNow = timeToMins(horaActual);
+let tStart = timeToMins(inicio);
+let tEnd = timeToMins(fin);
+
+if (tStart < tEnd) {
+if (tNow < tStart) return 'FUTURO';
+if (tNow >= tEnd) return 'PASADO';
+return 'ACTIVO';
+} else {
+if (tNow >= tStart || tNow < tEnd) return 'ACTIVO';
+if (tNow >= tEnd && tNow < tStart) {
+const midpoint = (tEnd + tStart) / 2;
+return tNow < midpoint ? 'PASADO' : 'FUTURO';
+}
+return 'FUTURO';
+}
+}
+
+// ============================================================
+// CRUCE PRINCIPAL
+// ============================================================
+function animarYCruzar() {
+const cont = document.getElementById('tabla-container');
+cont.style.opacity = "0.2";
+setTimeout(() => { procesarCruce(); cont.style.opacity = "1"; }, 150);
+}
+
+function procesarCruce() {
+const txtCuadrante = document.getElementById('raw-cuadrante').value.trim();
+const txtAvaya = document.getElementById('raw-avaya').value.trim();
+const horaConsulta = document.getElementById('hora-consulta').value;
+const minsActual = timeToMins(horaConsulta);
+
+const boxC = document.getElementById('raw-cuadrante');
+const boxA = document.getElementById('raw-avaya');
+boxC.classList.remove('input-error'); boxA.classList.remove('input-error');
+
+if (!txtCuadrante) { boxC.classList.add('input-error'); mostrarToast("⚠️ El cuadrante está vacío"); return; }
+if (!txtAvaya) { boxA.classList.add('input-error'); mostrarToast("⚠️ Los datos de Avaya están vacíos"); return; }
+
+// Reset de contadores
+g_wp = { g_plan:0, g_real:0, g_aus:0, gts_plan:0, gts_real:0, s_plan:0, s_real:0, s_aus:0 };
+g_entradas = {}; g_salidas = {}; g_ocupacion = {};
+
+for (let h=0; h<24; h++) {
+g_ocupacion[`${String(h).padStart(2,'0')}:00`] = 0;
+g_ocupacion[`${String(h).padStart(2,'0')}:30`] = 0;
+}
+
+const avayaLogados = new Map();
+txtAvaya.split('\n').forEach(linea => {
+const matchPin = linea.match(/\b0*(\d{3,6})\b/);
+if (matchPin) {
+const celdas = linea.split(/[\t,;]/);
+let nom = "";
+if (celdas.length > 2) {
+nom = (celdas[1]+' '+ (celdas[2] || "")).trim().replace(/["']/g,"");
+} else {
+nom = linea.replace(matchPin[0],"").replace(/[\t,;]/g,' ').trim();
+}
+avayaLogados.set(matchPin[1], nom || '(sin nombre)');
+}
+});
+
+const cuadranteEsperados = new Map();
+txtCuadrante.split('\n').forEach(linea => {
+const matchPin = linea.match(/\b0*(\d{3,6})\b/);
+if (matchPin) {
+const pin = matchPin[1];
+const idx = linea.indexOf(matchPin[0]);
+let nombre = linea.substring(0, idx).replace(/[\t";]/g,' ').trim();
+if (nombre.endsWith(',')) nombre = nombre.slice(0,-1).trim();
+
+let desp = linea.substring(idx + matchPin[0].length);
+let horario = desp.replace(/^[\t,;\s"]+/,"").trim();
+const fin = horario.search(/[\t,;]/);
+if (fin > -1) horario = horario.substring(0, fin).trim();
+horario = horario.replace(/["']/g,"");
+
+if (pin && horario && !horario.toLowerCase().includes("libre")) {
+cuadranteEsperados.set(pin, { nombre, horario });
+}
+}
+});
+
+const tbody = document.querySelector('#tabla-res tbody');
+tbody.innerHTML = "";
+
+let cTotal=0, cPres=0, cAus=0, cGts=0, cExc=0, cInact=0, cSup=0;
+const analizados = new Set();
+
+cuadranteEsperados.forEach((datos, pin) => {
+analizados.add(pin);
+const logado = avayaLogados.has(pin);
+const esSupervisor = PIN_SUPERVISORES.includes(pin);
+const iconoAvaya = logado ? "✅ Logado" : "❌ Desconectado";
+
+const esTurnoTrabajo = /\d{2}[:^\-]\d{2}/.test(datos.horario);
+let esGTS = false;
+
+if ((datos.horario.includes('^') || datos.horario.toUpperCase().includes('GTS')) && minsActual >= 480 && minsActual <= 1200) {
+    esGTS = true;
+}
+
+let estadoHTML="", claseCSS="", filterGroup="";
+
+if (esTurnoTrabajo) {
+const m = datos.horario.match(/(\d{2}:\d{2})\s*[-\^]\s*(\d{2}:\d{2})/);
+if (m) {
+const inicio = m[1], fin = m[2];
+if (!esSupervisor) {
+g_entradas[inicio] = (g_entradas[inicio] || 0) + 1;
+g_salidas[fin] = (g_salidas[fin] || 0) + 1;
+calcularOcupacionIndiv(inicio, fin);
+}
+
+const sit = evaluarTurno(horaConsulta, inicio, fin);
+
+if (sit === 'ACTIVO') {
+cTotal++;
+
+if (esSupervisor) {
+    g_wp.s_plan++;
+    if (logado) {
+        estadoHTML='<span class="pill bg-sup">SUPERVISOR</span>';
+        filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
+    } else {
+        estadoHTML='<span class="pill bg-err">AUSENCIA SUP.</span>';
+        claseCSS='row-absent'; filterGroup='AUSENCIA'; cAus++; g_wp.s_aus++;
+    }
+} else if (esGTS) {
+    // ⚠️ EL PARCHE PARA GTS: LOS GTS ESTÁN SIEMPRE ACTIVOS EN SU LÍNEA Y NO PUEDEN SER AUSENCIAS
+    g_wp.gts_plan++;
+    g_wp.gts_real++; // Siempre lo damos por real dentro del WhatsApp y del cálculo
+    cGts++;
+    estadoHTML='<span class="pill bg-gts">LÍNEA GTS</span>';
+    filterGroup='GTS'; 
+} else {
+    // RESTO DE GESTORES (Los normales que sí pasan por Avaya)
+    g_wp.g_plan++;
+    if (logado) {
+        estadoHTML='<span class="pill bg-ok">PRESENTE</span>';
+        filterGroup='PRESENTE'; cPres++; g_wp.g_real++;
+    } else {
+        estadoHTML='<span class="pill bg-err">AUSENCIA</span>';
+        claseCSS='row-absent'; filterGroup='AUSENCIA'; cAus++; g_wp.g_aus++;
+    }
+}
+
+} else {
+if (logado) {
+if (esSupervisor) {
+estadoHTML='<span class="pill bg-sup">SUPERVISOR</span>';
+filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
+} else {
+estadoHTML='<span class="pill bg-warn">LOGADO F. TURNO</span>';
+claseCSS='row-extra'; filterGroup='EXCESO'; cExc++;
+}
+} else {
+const label = sit === 'PASADO' ? 'FINALIZADO' : 'POSTERIOR';
+estadoHTML=`<span class="pill bg-gray">${label}</span>`;
+claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
+}
+}
+}
+} else {
+if (logado) {
+estadoHTML='<span class="pill bg-warn">LOGADO EN PERMISO</span>';
+claseCSS='row-extra'; filterGroup='EXCESO'; cExc++;
+} else {
+estadoHTML='<span class="pill bg-gray">JUSTIFICADO</span>';
+claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
+}
+}
+
+tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${datos.nombre.toLowerCase()}" class="${claseCSS}">
+<td><b>${pin}</b></td>
+<td>${datos.nombre}</td>
+<td><b>${datos.horario}</b></td>
+<td>${iconoAvaya}</td>
+<td>${estadoHTML}</td>
+</tr>`;
+});
+
+avayaLogados.forEach((nombreAvaya, pin) => {
+if (!analizados.has(pin)) {
+const esSupervisor = PIN_SUPERVISORES.includes(pin);
+let estadoHTML="", claseCSS="", filterGroup="";
+
+if (esSupervisor) {
+estadoHTML='<span class="pill bg-sup">SUPERVISOR (Extra)</span>';
+filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
+} else {
+estadoHTML='<span class="pill bg-warn">NO PLANIFICADO</span>';
+filterGroup='EXCESO'; claseCSS='row-extra'; cExc++;
+}
+
+tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nombreAvaya.toLowerCase()}" class="${claseCSS}">
+<td><b>${pin}</b></td>
+<td>${nombreAvaya}</td>
+<td><i>Sin cuadrante hoy</i></td>
+<td>✅ Logado</td>
+<td>${estadoHTML}</td>
+</tr>`;
+}
+});
+
+document.getElementById('s-total').innerText = cTotal;
+document.getElementById('s-pres').innerText = cPres;
+document.getElementById('s-sup').innerText = cSup;
+document.getElementById('s-gts').innerText = cGts;
+document.getElementById('s-aus').innerText = cAus;
+document.getElementById('s-exc').innerText = cExc;
+document.getElementById('s-inact').innerText = cInact;
+
+document.getElementById('btn-whatsapp').style.display = 'flex';
+document.getElementById('btn-ocup').style.display = 'flex';
+document.getElementById('btn-export').style.display = 'flex';
+document.getElementById('buscador').disabled = false;
+
+const ahora = horaConsulta;
+document.getElementById('last-cruce').innerText = `Último cruce: ${ahora} | ${cTotal} activos`;
+
+guardarHistorial({ hora: ahora, total: cTotal, pres: cPres, aus: cAus, gts: cGts });
+filtrar('ALL');
+mostrarToast(`✅ Cruce completado - ${cTotal} registros activos`);
+}
+
+// ============================================================
+// OCUPACIÓN
+// ============================================================
+function calcularOcupacionIndiv(ent, sal) {
+let minEnt = timeToMins(ent);
+let minSal = timeToMins(sal);
+
+if (minSal <= minEnt) minSal += 24 * 60;
+
+Object.keys(g_ocupacion).forEach(franja => {
+let minF = timeToMins(franja);
+if (minEnt >= 12 * 60 && minF < 12 * 60) minF += 24 * 60;
+if (minF >= minEnt && minF < minSal) g_ocupacion[franja]++;
+});
+}
+
+function mostrarOcupacion() {
+let html = '<table class="table-ocup"><thead><tr><th>Franja</th><th>Gestores Planificados</th></tr></thead><tbody>';
+Object.keys(g_ocupacion).sort().forEach(h => {
+if (g_ocupacion[h] > 0 || (h >= "07:00" && h <= "23:30")) {
+html += `<tr><td><b>${h}</b></td><td>${g_ocupacion[h]}</td></tr>`;
+}
+});
+html += '</tbody></table>';
+document.getElementById('ocup-container').innerHTML = html;
+document.getElementById('modalOcup').style.display = 'flex';
+}
+
+function copiarOcupacion() {
+let txt = "Hora\tPlanificados\n";
+Object.keys(g_ocupacion).sort().forEach(h => {
+if (g_ocupacion[h] > 0 || (h >= "07:00" && h <= "23:30")) txt += `${h}\t${g_ocupacion[h]}\n`;
+});
+navigator.clipboard.writeText(txt).then(() => {
+mostrarToast("✅ Ocupación copiada"); cerrarModal('modalOcup');
+});
+}
+
+// ============================================================
+// BUSCADOR EN TIEMPO REAL
+// ============================================================
+function buscarTabla() {
+const q = document.getElementById('buscador').value.toLowerCase().trim();
+document.querySelectorAll('#tabla-res tbody tr').forEach(tr => {
+const pin = (tr.getAttribute('data-pin') || "").toLowerCase();
+const nombre = (tr.getAttribute('data-nombre') || "").toLowerCase();
+const visible = !q || pin.includes(q) || nombre.includes(q);
+tr.style.display = visible ? "" : 'none';
+});
+}
+
+// ============================================================
+// FILTRO POR CATEGORÍA
+// ============================================================
+function filtrar(tipo) {
+document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active'));
+const map = { ALL:'f-all', PRESENTE:'f-pres', SUPERVISOR:'f-sup', GTS:'f-gts', AUSENCIA:'f-aus', EXCESO:'f-exc', INACTIVO:'f-inact' };
+document.getElementById(map[tipo]).classList.add('active');
+document.getElementById('buscador').value = "";
+document.querySelectorAll('#tabla-res tbody tr').forEach(f => {
+f.style.display = (tipo === 'ALL' || f.getAttribute('data-type') === tipo) ? "" : 'none';
+});
+}
+
+// ============================================================
+// ORDENAR TABLA POR COLUMNA
+// ============================================================
+function sortTable(colIndex) {
+const table = document.getElementById('tabla-res');
+const tbody = table.querySelector('tbody');
+const rows = Array.from(tbody.querySelectorAll('tr'));
+const asc = !sortDir[colIndex];
+sortDir = {}; 
+sortDir[colIndex] = asc;
+
+table.querySelectorAll('thead th').forEach((th, i) => {
+th.classList.remove('sorted');
+const icon = th.querySelector('.sort-icon');
+if (icon) icon.innerText = '↕';
+});
+
+const thActive = table.querySelectorAll('thead th')[colIndex];
+thActive.classList.add('sorted');
+const iconActive = thActive.querySelector('.sort-icon');
+if (iconActive) iconActive.innerText = asc ? '↑' : '↓';
+
+rows.sort((a, b) => {
+const aVal = (a.cells[colIndex]?.innerText || "").trim().toLowerCase();
+const bVal = (b.cells[colIndex]?.innerText || "").trim().toLowerCase();
+return asc ? aVal.localeCompare(bVal, 'es') : bVal.localeCompare(aVal, 'es');
+});
+
+rows.forEach(r => tbody.appendChild(r));
+}
+
+// ============================================================
+// EXPORTAR CSV
+// ============================================================
+function exportarCSV() {
+const rows = document.querySelectorAll('#tabla-res tr');
+if (rows.length <= 1) { mostrarToast("⚠️ No hay datos para exportar"); return; }
+
+let csv = "PIN;Empleado;Turno;Estado Avaya;Situacion\n";
+rows.forEach((tr, i) => {
+if (i === 0) return;
+const celdas = Array.from(tr.cells).map(td => `"${(td.innerText || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`);
+csv += celdas.join(';') + '\n';
+});
+
+const bom = '\uFEFF'; 
+const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+const hora = document.getElementById('hora-consulta').value.replace(':','-');
+a.download = `asistencia_WFM_${hora}.csv`;
+a.click();
+URL.revokeObjectURL(url);
+mostrarToast("✅ CSV descargado correctamente");
+}
+
+// ============================================================
+// HISTORIAL DE CRUCES
+// ============================================================
+function guardarHistorial(entry) {
+g_historial.unshift(entry);
+if (g_historial.length > 3) g_historial.pop();
+renderHistorial();
+}
+
+function renderHistorial() {
+const section = document.getElementById('historial-section');
+const grid = document.getElementById('hist-grid');
+if (!g_historial.length) { section.style.display = 'none'; return; }
+
+section.style.display = 'block';
+grid.innerHTML = "";
+g_historial.forEach((h, i) => {
+const card = document.createElement('div');
+card.className = 'hist-card';
+card.innerHTML = `
+    <div class="hist-time">${h.hora}</div>
+    <div class="hist-data">
+        Activos: <b>${h.total}</b> &nbsp;|&nbsp; OK: <b style="color:var(--success)">${h.pres}</b><br>
+        Ausencias: <b style="color:var(--danger)">${h.aus}</b> &nbsp;|&nbsp; GTS: <b style="color:var(--gts)">${h.gts}</b>
+    </div>`;
+grid.appendChild(card);
+});
+}
+
+// ============================================================
+// WHATSAPP (CORRECCIÓN MATEMÁTICA DEFINITIVA)
+// ============================================================
+function abrirWhatsApp() {
+// Planificados = Todos los activos del cuadrante (Normales + GTS)
+const totalPlanificados = g_wp.g_plan + g_wp.gts_plan;
+
+// Reales = Todos los presentes (Normales + GTS)
+const totalReales = g_wp.g_real + g_wp.gts_real;
+
+// Ausencias = Sólo las ausencias de gestores normales (GTS NUNCA son ausencias)
+const totalAusencias = g_wp.g_aus;
+
+let txt = '* Gestores: \n';
+txt += `- Planificados: ${totalPlanificados}\n`;
+txt += `- Reales: ${totalReales}\n`;
+txt += `- Ausencias: ${totalAusencias < 10 ? '0' + totalAusencias : totalAusencias}\n`;
+txt += `- En formación: 0\n`;
+txt += `- Línea GTS: ${g_wp.gts_real}\n`;
+txt += `- Línea ayuda psicológica: 0\n\n`;
+
+txt += '* Supervisores: \n';
+txt += `- Planificados: ${g_wp.s_plan}\n`;
+txt += `- Reales: ${g_wp.s_real}\n`;
+txt += `- Ausencias: ${g_wp.s_aus}\n`;
+txt += '==\n';
+txt += '- En UOPI: 0\n- En tareas administrativas: 0\n- En formación: 0\n- Línea GTS: 0\n\n';
+
+txt += '* Horas de entrada de turno y número de gestores que entran:\n';
+Object.keys(g_entradas).sort().forEach(h => { txt += `${h} ${g_entradas[h]}\n`; });
+
+txt += '\n* Horas de salida de turno y número de gestores que salen:\n';
+Object.keys(g_salidas).sort().forEach(h => { txt += `${h} ${g_salidas[h]}\n`; });
+
+txt += '\n*Tiempo en cola: \n*Llamadas en cola: ';
+
+document.getElementById('wp-text').value = txt;
+document.getElementById('modalWP').style.display = 'flex';
+}
+
+function copiarTexto(id) {
+navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
+mostrarToast("✅ ¡Copiado al portapapeles!");
+document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none');
+});
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = function() {
+iniciarReloj();
+const theme = localStorage.getItem('wfm_theme') || 'light';
+document.documentElement.setAttribute('data-theme', theme);
+document.getElementById('btn-darkmode').innerText = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+if (localStorage.getItem("wfm_cuadrante")) document.getElementById("raw-cuadrante").value = localStorage.getItem("wfm_cuadrante");
+if (localStorage.getItem("wfm_avaya")) document.getElementById("raw-avaya").value = localStorage.getItem("wfm_avaya");
+};
+</script>
 </body>
-</html>
+</html> 
