@@ -313,6 +313,28 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 
 /* Validación vacío */
 .input-error { border-color: var(--danger) !important; }
+/* AGENDA OPERATIVA v6 */
+#inc-autocomplete { position: relative; }
+#inc-sugerencias {
+    display: none;
+    margin-top: 4px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background: var(--card);
+    box-shadow: var(--shadow-lg);
+    max-height: 180px;
+    overflow-y: auto;
+}
+.inc-sugerencia-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+.inc-sugerencia-item:last-child { border-bottom: none; }
+.inc-sugerencia-item:hover { background: var(--table-hover); }
+#inc-roster-info { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+#inc-turno-detectado[readonly] { background: #f5f7fa; }
+/* AGENDA OPERATIVA v6 */
 </style>
 </head>
 <body>
@@ -370,6 +392,69 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 </div>
 </div>
 
+<!-- INCIDENCIAS v6 - INICIO -->
+<div id="modalIncidencias" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--warning); width: 850px; max-width: 95vw;">
+<p class="modal-title"> Registro de Incidencias</p>
+<div class="grid-2">
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">PIN</label><input type="text" id="inc-pin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: 8830"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Empleado</label><input type="text" id="inc-empleado" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Nombre completo"></div>
+<div style="grid-column: span 2;">
+    <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Buscar empleado</label>
+    <div id="inc-autocomplete" style="position:relative;">
+        <input type="text" id="inc-buscar-empleado" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Buscar por PIN o nombre..." oninput="renderSugerenciasAgenda(buscarEmpleadoAgenda(this.value))">
+        <div id="inc-sugerencias"></div>
+    </div>
+    <div id="inc-roster-info">Ingresa PIN o nombre para buscar el turno.</div>
+</div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Fecha</label><input type="date" id="inc-fecha" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipo</label>
+<select id="inc-tipo" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; cursor: pointer;">
+<option value="Baja médica">Baja médica</option>
+<option value="Horas médicas">Horas médicas</option>
+<option value="Permiso">Permiso</option>
+<option value="Horas sindicales">Horas sindicales</option>
+<option value="Formación">Formación</option>
+<option value="Retraso">Retraso</option>
+<option value="Consulta médica">Consulta médica</option>
+<option value="Otros">Otros</option>
+</select>
+</div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Hora Inicio (Opcional)</label><input type="time" id="inc-inicio" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Hora Fin (Opcional)</label><input type="time" id="inc-fin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Supervisor que registra</label><input type="text" id="inc-supervisor" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="PIN Supervisor"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Turno detectado</label><input type="text" id="inc-turno-detectado" readonly style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Turno detectado desde cuadrante"></div>
+</div>
+<div style="margin-top: 10px;">
+<label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Motivo / Observaciones</label>
+<textarea id="inc-obs" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; resize: vertical; min-height: 60px;" placeholder="Detalla la incidencia..."></textarea>
+</div>
+<input type="hidden" id="inc-id">
+<div style="display:flex; gap:10px; margin-top:15px; margin-bottom: 25px;">
+<button class="btn-modal btn-modal-primary" onclick="guardarIncidencia()">GUARDAR INCIDENCIA</button>
+<button class="btn-modal btn-modal-secondary" onclick="limpiarFormularioIncidencia()">Limpiar</button>
+</div>
+<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+<h3 style="font-size:14px; color:var(--text); margin:0;">Histórico de Incidencias</h3>
+<div style="display:flex; gap:8px;">
+<button class="btn-clear" onclick="alert('Función de importar en desarrollo...')">📥 Importar</button>
+<button class="btn-clear" onclick="alert('Función de exportar en desarrollo...')">📤 Exportar</button>
+</div>
+</div>
+<div class="table-wrap" style="max-height: 250px; overflow-y: auto;">
+<table id="tabla-incidencias-ui">
+<thead>
+<tr><th>PIN</th><th>Nombre</th><th>Fecha</th><th>Tipo</th><th>Horario</th><th>Supervisor</th><th>Acciones</th></tr>
+</thead>
+<tbody id="tbody-incidencias">
+</tbody>
+</table>
+</div>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalIncidencias')">Cerrar</button>
+</div>
+</div>
+<!-- INCIDENCIAS v6 - FIN -->
+
 <div class="container">
 <div class="header">
 <div class="header-title">
@@ -386,6 +471,9 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <button class="btn-top" id="alarm-btn" onclick="toggleAlarma()">
 <span id="alarm-status-label">Alarma</span> <span id="alarm-countdown" style="font-weight:800;"></span>
 </button>
+<!-- INCIDENCIAS v6 - INICIO -->
+<button class="btn-top" onclick="abrirModalIncidencias()"> 📝 Incidencias</button>
+<!-- INCIDENCIAS v6 - FIN -->
 <button class="btn-top" onclick="abrirModalSup()"> SUP</button>
 <button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
 <button class="btn-top" onclick="document.getElementById('modalAyuda').style.display='flex'">? Ayuda</button>
@@ -479,6 +567,8 @@ let alarmEnd = null;
 let audioCtx = null;
 let sortDir = {}; // columna -> asc/desc
 let g_historial = []; // últimos 3 cruces
+let g_rosterByPin = new Map();
+let g_rosterList = [];
 
 // ============================================================
 // RELOJ
@@ -624,6 +714,84 @@ localStorage.setItem("wfm_cuadrante", document.getElementById("raw-cuadrante").v
 localStorage.setItem("wfm_avaya", document.getElementById("raw-avaya").value);
 }, 400);
 }
+
+// AGENDA OPERATIVA v6 - INICIO
+function construirRosterDesdeCuadrante(textoCuadrante) {
+    g_rosterByPin = new Map();
+    g_rosterList = [];
+
+    if (!textoCuadrante) return g_rosterList;
+
+    textoCuadrante.split('\n').forEach(linea => {
+        const matchPin = linea.match(/\b0*(\d{3,6})\b/);
+        if (matchPin) {
+            const pin = matchPin[1];
+            const idx = linea.indexOf(matchPin[0]);
+            let nombre = linea.substring(0, idx).replace(/[\t";]/g,' ').trim();
+            if (nombre.endsWith(',')) nombre = nombre.slice(0,-1).trim();
+
+            let desp = linea.substring(idx + matchPin[0].length);
+            let horario = desp.replace(/^[\t,;\s"]+/,'').trim();
+            const fin = horario.search(/[\t,;]/);
+            if (fin > -1) horario = horario.substring(0, fin).trim();
+            horario = horario.replace(/["']/g,'');
+
+            if (pin && horario && !horario.toLowerCase().includes("libre")) {
+                const empleado = { pin, nombre, horario, turnoInicio: null, turnoFin: null };
+                const m = horario.match(/(\d{2}:\d{2})\s*[-\^]\s*(\d{2}:\d{2})/);
+                if (m) {
+                    empleado.turnoInicio = m[1];
+                    empleado.turnoFin = m[2];
+                }
+                g_rosterByPin.set(pin, empleado);
+                g_rosterList.push(empleado);
+            }
+        }
+    });
+
+    g_rosterList.sort((a, b) => {
+        const cmp = a.nombre.localeCompare(b.nombre, 'es');
+        return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
+    });
+
+    return g_rosterList;
+}
+
+function buscarEmpleadoAgenda(query) {
+    const q = String(query || "").toLowerCase().trim();
+    if (!q) return [];
+    return g_rosterList.filter(emp => emp.pin.includes(q) || emp.nombre.toLowerCase().includes(q)).slice(0, 8);
+}
+
+function renderSugerenciasAgenda(resultados) {
+    const cont = document.getElementById('inc-sugerencias');
+    if (!cont) return;
+    cont.innerHTML = '';
+
+    if (!resultados.length) {
+        cont.style.display = 'none';
+        return;
+    }
+
+    cont.style.display = 'block';
+    resultados.forEach(emp => {
+        const item = document.createElement('div');
+        item.className = 'inc-sugerencia-item';
+        item.innerHTML = `<strong>${emp.nombre}</strong> <span style="color:var(--text-muted);">(${emp.pin})</span><br><small>${emp.horario || 'Sin turno'}</small>`;
+        item.onclick = () => seleccionarEmpleadoSugerencia(emp);
+        cont.appendChild(item);
+    });
+}
+
+function seleccionarEmpleadoSugerencia(emp) {
+    document.getElementById('inc-pin').value = emp.pin;
+    document.getElementById('inc-empleado').value = emp.nombre;
+    document.getElementById('inc-turno-detectado').value = emp.horario || '';
+    document.getElementById('inc-buscar-empleado').value = `${emp.pin} ${emp.nombre}`;
+    document.getElementById('inc-roster-info').innerText = 'Cargado desde cuadrante. Ajusta manualmente si es necesario.';
+    renderSugerenciasAgenda([]);
+}
+// AGENDA OPERATIVA v6 - FIN
 
 // ============================================================
 // MOTOR TEMPORAL
@@ -1059,10 +1227,184 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none')
 });
 }
 
+// INCIDENCIAS v6 - INICIO
+let g_incidencias = [];
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function inicializarIncidencias() {
+    const guardado = localStorage.getItem('wfm_incidencias_v6');
+    if (guardado) {
+        try { g_incidencias = JSON.parse(guardado); } 
+        catch(e) { g_incidencias = []; }
+    }
+}
+
+function guardarIncidenciasLocales() {
+    localStorage.setItem('wfm_incidencias_v6', JSON.stringify(g_incidencias));
+}
+
+function abrirModalIncidencias() {
+    limpiarFormularioIncidencia();
+    const txtCuadrante = document.getElementById('raw-cuadrante').value.trim();
+    construirRosterDesdeCuadrante(txtCuadrante);
+    renderSugerenciasAgenda([]);
+    document.getElementById('inc-roster-info').innerText = txtCuadrante
+        ? 'Selecciona un empleado del cuadrante o escribe manualmente.'
+        : 'Sin cuadrante cargado. Puedes completar manualmente.';
+    document.getElementById('inc-fecha').value = new Date().toISOString().split('T')[0];
+    renderIncidencias();
+    document.getElementById('modalIncidencias').style.display = 'flex';
+}
+
+function limpiarFormularioIncidencia() {
+    document.getElementById('inc-id').value = "";
+    document.getElementById('inc-pin').value = "";
+    document.getElementById('inc-empleado').value = "";
+    document.getElementById('inc-buscar-empleado').value = "";
+    document.getElementById('inc-turno-detectado').value = "";
+    document.getElementById('inc-sugerencias').innerHTML = "";
+    document.getElementById('inc-roster-info').innerText = "";
+    document.getElementById('inc-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('inc-tipo').selectedIndex = 0;
+    document.getElementById('inc-inicio').value = "";
+    document.getElementById('inc-fin').value = "";
+    document.getElementById('inc-supervisor').value = "";
+    document.getElementById('inc-obs').value = "";
+}
+
+function guardarIncidencia() {
+    const idInput = document.getElementById('inc-id').value;
+    const pin = document.getElementById('inc-pin').value.trim();
+    const empleado = document.getElementById('inc-empleado').value.trim();
+    const turnoDetectado = document.getElementById('inc-turno-detectado').value.trim();
+    const fecha = document.getElementById('inc-fecha').value;
+    const tipo = document.getElementById('inc-tipo').value;
+    const inicio = document.getElementById('inc-inicio').value;
+    const fin = document.getElementById('inc-fin').value;
+    const supervisor = document.getElementById('inc-supervisor').value.trim();
+    const obs = document.getElementById('inc-obs').value.trim();
+
+    if (!pin || !empleado || !fecha) {
+        mostrarToast("⚠️ PIN, Empleado y Fecha son obligatorios"); return;
+    }
+
+    // Validación estricta de franja horaria
+    if ((inicio && !fin) || (!inicio && fin)) {
+        mostrarToast("⚠️ Indica ambas horas (inicio y fin) o déjalas en blanco para día completo."); return;
+    }
+    if (inicio && fin && inicio >= fin) {
+        mostrarToast("⚠️ La hora de fin debe ser mayor a la hora de inicio."); return;
+    }
+
+    const incidencia = {
+        id: idInput ? idInput : Date.now().toString(),
+        pin: pin,
+        empleado: empleado,
+        fecha: fecha,
+        hora_inicio: inicio || null,
+        hora_fin: fin || null,
+        turno_detectado: turnoDetectado || null,
+        tipo: tipo,
+        supervisor_registra: supervisor,
+        observaciones: obs,
+        fecha_creacion: idInput ? g_incidencias.find(i => i.id === idInput)?.fecha_creacion : new Date().toISOString()
+    };
+
+    if (idInput) {
+        const index = g_incidencias.findIndex(i => i.id === idInput);
+        if (index > -1) g_incidencias[index] = incidencia;
+    } else {
+        g_incidencias.push(incidencia);
+    }
+
+    guardarIncidenciasLocales();
+    limpiarFormularioIncidencia();
+    renderIncidencias();
+    mostrarToast("✅ Incidencia guardada correctamente");
+}
+
+function eliminarIncidencia(id) {
+    if(confirm("¿Estás seguro de eliminar permanentemente esta incidencia?")) {
+        g_incidencias = g_incidencias.filter(i => i.id !== id);
+        guardarIncidenciasLocales();
+        renderIncidencias();
+        mostrarToast("🗑️ Incidencia eliminada");
+    }
+}
+
+function editarIncidencia(id) {
+    const inc = g_incidencias.find(i => i.id === id);
+    if (!inc) return;
+
+    document.getElementById('inc-id').value = inc.id;
+    document.getElementById('inc-pin').value = inc.pin;
+    document.getElementById('inc-empleado').value = inc.empleado;
+    document.getElementById('inc-buscar-empleado').value = `${inc.pin} ${inc.empleado}`;
+    document.getElementById('inc-fecha').value = inc.fecha;
+    document.getElementById('inc-tipo').value = inc.tipo;
+    document.getElementById('inc-inicio').value = inc.hora_inicio || "";
+    document.getElementById('inc-fin').value = inc.hora_fin || "";
+    document.getElementById('inc-supervisor').value = inc.supervisor_registra || "";
+    document.getElementById('inc-turno-detectado').value = inc.turno_detectado || "";
+    document.getElementById('inc-obs').value = inc.observaciones;
+}
+
+function renderIncidencias() {
+    const tbody = document.getElementById('tbody-incidencias');
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    if (g_incidencias.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-muted);">Sin incidencias registradas</td></tr>';
+        return;
+    }
+
+    const sorted = [...g_incidencias].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+
+    sorted.forEach(inc => {
+        const horario = (inc.hora_inicio && inc.hora_fin) ? `${inc.hora_inicio} - ${inc.hora_fin}` : 'Día completo';
+        
+        // Sanitización para inyección segura
+        const sPin = escapeHTML(inc.pin);
+        const sEmp = escapeHTML(inc.empleado);
+        const sFec = escapeHTML(inc.fecha);
+        const sTip = escapeHTML(inc.tipo);
+        const sHor = escapeHTML(horario);
+        const sSup = escapeHTML(inc.supervisor_registra);
+        const sObs = escapeHTML(inc.observaciones);
+
+        tbody.innerHTML += `
+            <tr title="Observaciones: ${sObs}">
+                <td><b>${sPin}</b></td>
+                <td>${sEmp}</td>
+                <td>${sFec}</td>
+                <td><span class="pill bg-warn">${sTip}</span></td>
+                <td>${sHor}</td>
+                <td>${sSup}</td>
+                <td>
+                    <button onclick="editarIncidencia('${inc.id}')" style="background:none; border:none; cursor:pointer; font-size:14px; margin-right:8px;" title="Editar">✏️</button>
+                    <button onclick="eliminarIncidencia('${inc.id}')" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Eliminar">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+// INCIDENCIAS v6 - FIN
+
 // ============================================================
 // INIT
 // ============================================================
 window.onload = function() {
+inicializarIncidencias(); // INCIDENCIAS v6
 iniciarReloj();
 const theme = localStorage.getItem('wfm_theme') || 'light';
 document.documentElement.setAttribute('data-theme', theme);
