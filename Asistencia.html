@@ -132,6 +132,36 @@ justify-content: center; gap: 8px;
 .btn-wp { background: linear-gradient(135deg, #25D366, #1da851); box-shadow: 0 4px 0 #128c3a; display: none; }
 .btn-ocup { background: linear-gradient(135deg, #2c3e50, #1a252f); box-shadow: 0 4px 0 #0d1318; display: none; }
 .btn-export { background: linear-gradient(135deg, #16a085, #0e6655); box-shadow: 0 4px 0 #0a4a3d; display: none; }
+.agenda-wrap { display: grid; gap: 18px; }
+.agenda-seccion { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.agenda-seccion__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; }
+.agenda-seccion__header--success { color: #1e7f34; }
+.agenda-seccion__header--warning { color: #d35400; }
+.agenda-seccion__header--muted { color: #7f8c8d; }
+.agenda-seccion__header--info { color: #21618c; }
+.agenda-seccion__header--dark { color: #2c3e50; }
+.agenda-seccion__body { display: grid; gap: 10px; }
+.edit-highlight { animation: editFlash 1s ease forwards; }
+@keyframes editFlash { 0% { box-shadow: 0 0 0 rgba(46, 204, 113, 0); } 20% { box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.35); } 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
+.agenda-empty { padding: 16px; border: 1px dashed var(--border); border-radius: 10px; color: var(--text-muted); font-size: 13px; text-align: center; }
+.incidencia-card { background: var(--bg); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.incidencia-card--activa { border-color: #27ae60; }
+.incidencia-card--proxima { border-color: #e67e22; }
+.incidencia-card--finalizada { border-color: #95a5a6; }
+.incidencia-card--futura { border-color: #3498db; }
+.incidencia-card--pasada { border-color: #34495e; }
+.incidencia-card__top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.incidencia-card__title { font-size: 14px; font-weight: 700; }
+.incidencia-card__pin { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+.incidencia-card__meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--text-muted); }
+.incidencia-card__tag { background: rgba(52, 152, 219, 0.1); border-radius: 999px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.incidencia-card__line { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.incidencia-card__line b { color: var(--text); }
+.incidencia-card__footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.incidencia-card__actions { display: flex; gap: 8px; }
+.incidencia-card__text { color: var(--text); font-size: 13px; line-height: 1.4; white-space: pre-wrap; }
+.incidencia-card button { border: none; background: none; cursor: pointer; font-size: 14px; }
+
 /* =========================================
 DASHBOARD STATS
 ========================================= */
@@ -458,15 +488,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <button class="btn-clear" onclick="alert('Función de exportar en desarrollo...')">📤 Exportar</button>
 </div>
 </div>
-<div class="table-wrap" style="max-height: 250px; overflow-y: auto;">
-<table id="tabla-incidencias-ui">
-<thead>
-<tr><th>PIN</th><th>Nombre</th><th>Fecha</th><th>Tipo</th><th>Horario</th><th>Supervisor</th><th>Acciones</th></tr>
-</thead>
-<tbody id="tbody-incidencias">
-</tbody>
-</table>
-</div>
+<div id="agenda-incidencias" class="agenda-wrap"></div>
 <button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalIncidencias')">Cerrar</button>
 </div>
 </div>
@@ -1678,47 +1700,127 @@ function editarIncidencia(id) {
     document.getElementById('inc-supervisor').value = inc.supervisor_registra || "";
     document.getElementById('inc-turno-detectado').value = inc.turno_detectado || "";
     document.getElementById('inc-obs').value = inc.observaciones;
+
+    const scrollTarget = document.querySelector('#modalIncidencias .grid-2');
+    if (scrollTarget) {
+        scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollTarget.classList.add('edit-highlight');
+        setTimeout(() => scrollTarget.classList.remove('edit-highlight'), 1000);
+    }
+
+    const focusField = document.getElementById('inc-buscar-empleado') || document.getElementById('inc-pin');
+    if (focusField) focusField.focus();
+}
+
+function obtenerEstadoIncidencia(inc, fechaActual, horaActual) {
+    if (!inc || !inc.fecha) return 'PASADA';
+    const fechaInc = inc.fecha;
+    if (fechaInc > fechaActual) return 'FUTURA';
+    if (fechaInc < fechaActual) return 'PASADA';
+
+    const inicio = inc.hora_inicio;
+    const fin = inc.hora_fin;
+    if (!inicio && !fin) return 'ACTIVA_AHORA';
+    if (inicio && fin) {
+        if (horaActual >= inicio && horaActual < fin) return 'ACTIVA_AHORA';
+        if (horaActual < inicio) return 'PROXIMA_HOY';
+        return 'FINALIZADA_HOY';
+    }
+    if (inicio && !fin) return horaActual < inicio ? 'PROXIMA_HOY' : 'ACTIVA_AHORA';
+    if (!inicio && fin) return horaActual < fin ? 'ACTIVA_AHORA' : 'FINALIZADA_HOY';
+    return 'ACTIVA_AHORA';
+}
+
+function clasificarIncidenciasAgenda(fechaActual, horaActual) {
+    const grupos = {
+        activasAhora: [],
+        proximasHoy: [],
+        finalizadasHoy: [],
+        futuras: [],
+        pasadas: []
+    };
+
+    g_incidencias.forEach(inc => {
+        const estado = obtenerEstadoIncidencia(inc, fechaActual, horaActual);
+        const codigo = obtenerCodigoAusencia(inc.tipo);
+        const horario = (inc.hora_inicio && inc.hora_fin) ? `${inc.hora_inicio} - ${inc.hora_fin}` : 'Día completo';
+        const item = { ...inc, codigo, horario, estado };
+
+        if (estado === 'ACTIVA_AHORA') grupos.activasAhora.push(item);
+        else if (estado === 'PROXIMA_HOY') grupos.proximasHoy.push(item);
+        else if (estado === 'FINALIZADA_HOY') grupos.finalizadasHoy.push(item);
+        else if (estado === 'FUTURA') grupos.futuras.push(item);
+        else grupos.pasadas.push(item);
+    });
+
+    return grupos;
 }
 
 function renderIncidencias() {
-    const tbody = document.getElementById('tbody-incidencias');
-    if (!tbody) return;
-    tbody.innerHTML = "";
+    const wrapper = document.getElementById('agenda-incidencias');
+    if (!wrapper) return;
 
-    if (g_incidencias.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-muted);">Sin incidencias registradas</td></tr>';
-        return;
-    }
+    const fechaActual = new Date().toISOString().slice(0, 10);
+    const horaActual = new Date().toTimeString().slice(0, 5);
+    const agenda = clasificarIncidenciasAgenda(fechaActual, horaActual);
 
-    const sorted = [...g_incidencias].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+    const secciones = [
+        { key: 'activasAhora', title: 'Activas ahora', headerClass: 'agenda-seccion__header--success', cardClass: 'incidencia-card--activa' },
+        { key: 'proximasHoy', title: 'Próximas hoy', headerClass: 'agenda-seccion__header--warning', cardClass: 'incidencia-card--proxima' },
+        { key: 'finalizadasHoy', title: 'Finalizadas hoy', headerClass: 'agenda-seccion__header--muted', cardClass: 'incidencia-card--finalizada' },
+        { key: 'futuras', title: 'Futuras', headerClass: 'agenda-seccion__header--info', cardClass: 'incidencia-card--futura' },
+        { key: 'pasadas', title: 'Pasadas', headerClass: 'agenda-seccion__header--dark', cardClass: 'incidencia-card--pasada' }
+    ];
 
-    sorted.forEach(inc => {
-        const horario = (inc.hora_inicio && inc.hora_fin) ? `${inc.hora_inicio} - ${inc.hora_fin}` : 'Día completo';
-        
-        // Sanitización para inyección segura
-        const sPin = escapeHTML(inc.pin);
-        const sEmp = escapeHTML(inc.empleado);
-        const sFec = escapeHTML(inc.fecha);
-        const sTip = escapeHTML(inc.tipo);
-        const sHor = escapeHTML(horario);
-        const sSup = escapeHTML(inc.supervisor_registra);
-        const sObs = escapeHTML(inc.observaciones);
+    wrapper.innerHTML = secciones.map(seccion => {
+        const items = agenda[seccion.key] || [];
+        const cards = items.length
+            ? items.map(item => renderIncidenciaCard(item, seccion.cardClass)).join('')
+            : '<div class="agenda-empty">Sin registros</div>';
 
-        tbody.innerHTML += `
-            <tr title="Observaciones: ${sObs}">
-                <td><b>${sPin}</b></td>
-                <td>${sEmp}</td>
-                <td>${sFec}</td>
-                <td><span class="pill bg-warn">${sTip}</span></td>
-                <td>${sHor}</td>
-                <td>${sSup}</td>
-                <td>
-                    <button onclick="editarIncidencia('${inc.id}')" style="background:none; border:none; cursor:pointer; font-size:14px; margin-right:8px;" title="Editar">✏️</button>
-                    <button onclick="eliminarIncidencia('${inc.id}')" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Eliminar">🗑️</button>
-                </td>
-            </tr>
+        return `
+            <div class="agenda-seccion">
+                <div class="agenda-seccion__header ${seccion.headerClass}">
+                    <span>${seccion.title}</span>
+                    <span>${items.length}</span>
+                </div>
+                <div class="agenda-seccion__body">${cards}</div>
+            </div>
         `;
-    });
+    }).join('');
+}
+
+function renderIncidenciaCard(inc, cardClass) {
+    const sPin = escapeHTML(inc.pin || '');
+    const sEmp = escapeHTML(inc.empleado || '');
+    const sTip = escapeHTML(inc.tipo || '');
+    const sCod = escapeHTML(inc.codigo || '');
+    const sFec = escapeHTML(inc.fecha || '');
+    const sHor = escapeHTML(inc.horario || '');
+    const sTurno = escapeHTML(inc.turno_detectado || '');
+    const sObs = escapeHTML(inc.observaciones || '');
+    const sSup = escapeHTML(inc.supervisor_registra || '');
+
+    return `
+        <div class="incidencia-card ${cardClass}">
+            <div class="incidencia-card__top">
+                <div class="incidencia-card__title">${sEmp} <span class="incidencia-card__pin">${sPin}</span></div>
+                <div class="incidencia-card__tag">${sTip} ${sCod ? `(${sCod})` : ''}</div>
+            </div>
+            <div class="incidencia-card__line"><b>Fecha</b><span>${sFec}</span></div>
+            <div class="incidencia-card__line"><b>Horario</b><span>${sHor}</span></div>
+            ${sTurno ? `<div class="incidencia-card__line"><b>Turno</b><span>${sTurno}</span></div>` : ''}
+            ${sObs ? `<div class="incidencia-card__line"><b>Obs</b><span class="incidencia-card__text">${sObs}</span></div>` : ''}
+            ${sSup ? `<div class="incidencia-card__line"><b>Supervisor</b><span>${sSup}</span></div>` : ''}
+            <div class="incidencia-card__footer">
+                <div></div>
+                <div class="incidencia-card__actions">
+                    <button onclick="editarIncidencia('${inc.id}')" title="Editar">✏️</button>
+                    <button onclick="eliminarIncidencia('${inc.id}')" title="Eliminar">🗑️</button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 // INCIDENCIAS v6 - FIN
 
