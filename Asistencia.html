@@ -417,6 +417,15 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <button class="btn-modal btn-modal-secondary" onclick="cerrarDiarioOperativo()">Cerrar</button>
 </div>
 </div>
+<div id="modalControlDiario" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--primary); width: 760px; max-width: 95vw;">
+<p class="modal-title">Control Diario</p>
+<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Previsualización de g_controlDiario generado desde el estado actual.</p>
+<textarea id="control-diario-text" class="modal-txt" readonly></textarea>
+<button class="btn-modal btn-modal-primary" onclick="copiarTexto('control-diario-text')">COPIAR JSON</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalControlDiario')">Cerrar</button>
+</div>
+</div>
 <div id="modalSup" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--sup);">
 <p class="modal-title"> Gestionar Supervisores</p>
@@ -538,6 +547,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 </button>
 <!-- INCIDENCIAS v6 - INICIO -->
 <button class="btn-top" onclick="abrirModalIncidencias()"> 📝 Incidencias</button>
+<button class="btn-top" onclick="abrirModalControlDiario()"> 📄 Control Diario</button>
 <button class="btn-top" onclick="abrirModalPlantilla()"> 📋 Plantilla</button>
 <!-- INCIDENCIAS v6 - FIN -->
 <button class="btn-top" onclick="abrirModalSup()"> SUP</button>
@@ -638,6 +648,7 @@ let g_rosterByPin = new Map();
 let g_rosterList = [];
 let g_personalMaestro = [];
 let g_diarioOperativo = null;
+let g_controlDiario = null;
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -797,6 +808,116 @@ guardarLocal._t = setTimeout(() => {
 localStorage.setItem("wfm_cuadrante", document.getElementById("raw-cuadrante").value);
 localStorage.setItem("wfm_avaya", document.getElementById("raw-avaya").value);
 }, 400);
+}
+
+function abrirModalControlDiario() {
+    generarControlDiario();
+    document.getElementById('control-diario-text').value = JSON.stringify(g_controlDiario, null, 2);
+    document.getElementById('modalControlDiario').style.display = 'flex';
+}
+
+function generarControlDiario() {
+    const fecha = g_diarioOperativo?.fecha || new Date().toISOString().slice(0, 10);
+    const hora_cruce = g_diarioOperativo?.hora_cruce || document.getElementById('hora-consulta').value;
+    const slots = Object.keys(g_ocupacion).sort();
+    const horaActual = hora_cruce;
+
+    const ausenciasActualesOperacion = Array.isArray(g_diarioOperativo?.filas)
+        ? g_diarioOperativo.filas.filter(f => f.tipo === 'AUSENCIA' && f.logado === false && !f.esSupervisor)
+        : [];
+    const detalleAusenciasOperacion = {};
+    ausenciasActualesOperacion.forEach(fila => {
+        const codigo = obtenerCodigoAusencia(fila.incidencia?.tipo || fila.estado || 'AI');
+        detalleAusenciasOperacion[codigo] = (detalleAusenciasOperacion[codigo] || 0) + 1;
+    });
+    const detalleOperacionText = Object.keys(detalleAusenciasOperacion).length
+        ? Object.keys(detalleAusenciasOperacion).sort().map(c => `${detalleAusenciasOperacion[c]} ${c}`).join(' + ')
+        : null;
+
+    const ausenciasActualesSupervision = Array.isArray(g_diarioOperativo?.filas)
+        ? g_diarioOperativo.filas.filter(f => f.tipo === 'AUSENCIA' && f.logado === false && f.esSupervisor)
+        : [];
+    const detalleAusenciasSupervision = {};
+    ausenciasActualesSupervision.forEach(fila => {
+        const codigo = obtenerCodigoAusencia(fila.incidencia?.tipo || fila.estado || 'AI');
+        detalleAusenciasSupervision[codigo] = (detalleAusenciasSupervision[codigo] || 0) + 1;
+    });
+    const detalleSupervisionText = Object.keys(detalleAusenciasSupervision).length
+        ? Object.keys(detalleAusenciasSupervision).sort().map(c => `${detalleAusenciasSupervision[c]} ${c}`).join(' + ')
+        : null;
+
+    const incidenciasTurno = Array.isArray(g_incidencias)
+        ? g_incidencias.filter(inc => inc.fecha === fecha)
+        : [];
+
+    const columnas = slots.map(hora => {
+        const esFranjaActual = hora === horaActual;
+        return {
+            hora,
+            planifOperacion: g_ocupacion[hora] ?? null,
+            entradas: g_entradas[hora] ?? null,
+            salidas: g_salidas[hora] ?? null,
+            realOperacion: esFranjaActual ? g_wp.g_real : null,
+            ausenciasOperacion: esFranjaActual ? g_wp.g_aus : null,
+            detalleAusenciasOperacion: esFranjaActual ? detalleOperacionText : null,
+            planifEstructura: null,
+            realEstructura: esFranjaActual ? g_wp.s_real : null,
+            ausenciasSupervision: esFranjaActual ? g_wp.s_aus : null,
+            detalleAusenciasSupervision: esFranjaActual ? detalleSupervisionText : null,
+            totalAusencias: esFranjaActual ? (g_wp.g_aus + g_wp.s_aus) : null,
+            incidenciasEnTurno: esFranjaActual ? incidenciasTurno.map(inc => ({
+                id: inc.id,
+                pin: inc.pin,
+                empleado: inc.empleado,
+                tipo: inc.tipo,
+                codigo: obtenerCodigoAusencia(inc.tipo),
+                hora_inicio: inc.hora_inicio || null,
+                hora_fin: inc.hora_fin || null,
+                supervisor_registra: inc.supervisor_registra || null
+            })) : null
+        };
+    });
+
+    const resumen = {
+        automatico: {
+            totalPlanifOperacion: Object.values(g_ocupacion).reduce((sum, v) => sum + (typeof v === 'number' ? v : 0), 0),
+            totalRealOperacion: g_wp.g_real,
+            totalAusenciasOperacion: g_wp.g_aus,
+            totalPlanifEstructura: g_wp.s_plan,
+            totalRealEstructura: g_wp.s_real,
+            totalAusenciasSupervision: g_wp.s_aus,
+            totalGTS: g_wp.gts_real
+        }
+    };
+
+    const manual = {
+        pendientes: [
+            'Completar Real Operación por franja distinta a la franja actual',
+            'Completar Planificado Estructura por franja',
+            'Completar Ausencias Operación por franja distinta a la franja actual',
+            'Completar Ausencias Supervisión por franja distinta a la franja actual',
+            'Validar detalle de ausencias y supervisión contra planilla oficial'
+        ]
+    };
+
+    g_controlDiario = {
+        fecha,
+        hora_cruce,
+        columnas,
+        resumen,
+        incidencias_del_turno: incidenciasTurno.map(inc => ({
+            id: inc.id,
+            pin: inc.pin,
+            empleado: inc.empleado,
+            tipo: inc.tipo,
+            codigo: obtenerCodigoAusencia(inc.tipo),
+            hora_inicio: inc.hora_inicio || null,
+            hora_fin: inc.hora_fin || null,
+            supervisor_registra: inc.supervisor_registra || null,
+            observaciones: inc.observaciones || null
+        })),
+        manual
+    };
 }
 
 function cargarPersonalMaestro() {
