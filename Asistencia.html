@@ -569,6 +569,7 @@ let sortDir = {}; // columna -> asc/desc
 let g_historial = []; // últimos 3 cruces
 let g_rosterByPin = new Map();
 let g_rosterList = [];
+let g_diarioOperativo = null;
 
 // ============================================================
 // RELOJ
@@ -892,6 +893,7 @@ const tbody = document.querySelector('#tabla-res tbody');
 tbody.innerHTML = "";
 
 let cTotal=0, cPres=0, cAus=0, cGts=0, cExc=0, cInact=0, cSup=0;
+const filasDiario = [];
 const analizados = new Set();
 
 cuadranteEsperados.forEach((datos, pin) => {
@@ -908,6 +910,7 @@ if ((datos.horario.includes('^') || datos.horario.toUpperCase().includes('GTS'))
 }
 
 let estadoHTML="", claseCSS="", filterGroup="";
+let incidenciaActiva = null;
 
 if (esTurnoTrabajo) {
 const m = datos.horario.match(/(\d{2}:\d{2})\s*[-\^]\s*(\d{2}:\d{2})/);
@@ -930,7 +933,7 @@ if (esSupervisor) {
         estadoHTML='<span class="pill bg-sup">SUPERVISOR</span>';
         filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
     } else {
-        const incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
+        incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
         estadoHTML = incidenciaActiva
             ? `<span class="pill bg-err">${formatearIncidenciaParaEstado(incidenciaActiva)}</span>`
             : '<span class="pill bg-err">AUSENCIA SUP.</span>';
@@ -950,7 +953,7 @@ if (esSupervisor) {
         estadoHTML='<span class="pill bg-ok">PRESENTE</span>';
         filterGroup='PRESENTE'; cPres++; g_wp.g_real++;
     } else {
-        const incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
+        incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
         estadoHTML = incidenciaActiva
             ? `<span class="pill bg-err">${formatearIncidenciaParaEstado(incidenciaActiva)}</span>`
             : '<span class="pill bg-err">AUSENCIA</span>';
@@ -983,6 +986,22 @@ estadoHTML='<span class="pill bg-gray">JUSTIFICADO</span>';
 claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
 }
 }
+const estadoTexto = estadoHTML.replace(/<[^>]+>/g, '').trim();
+filasDiario.push({
+    pin,
+    nombre: datos.nombre,
+    horario: datos.horario,
+    iconoAvaya,
+    estado: estadoTexto,
+    estadoHTML,
+    tipo: filterGroup,
+    clase: claseCSS,
+    logado,
+    esSupervisor,
+    esGTS,
+    esTurnoTrabajo,
+    incidencia: incidenciaActiva || null
+});
 
 tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${datos.nombre.toLowerCase()}" class="${claseCSS}">
 <td><b>${pin}</b></td>
@@ -1005,6 +1024,22 @@ filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
 estadoHTML='<span class="pill bg-warn">NO PLANIFICADO</span>';
 filterGroup='EXCESO'; claseCSS='row-extra'; cExc++;
 }
+const estadoTexto = estadoHTML.replace(/<[^>]+>/g, '').trim();
+filasDiario.push({
+    pin,
+    nombre: nombreAvaya,
+    horario: 'Sin cuadrante hoy',
+    iconoAvaya: '✅ Logado',
+    estado: estadoTexto,
+    estadoHTML,
+    tipo: filterGroup,
+    clase: claseCSS,
+    logado: true,
+    esSupervisor,
+    esGTS: false,
+    esTurnoTrabajo: false,
+    incidencia: null
+});
 
 tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nombreAvaya.toLowerCase()}" class="${claseCSS}">
 <td><b>${pin}</b></td>
@@ -1031,6 +1066,23 @@ document.getElementById('buscador').disabled = false;
 
 const ahora = horaConsulta;
 document.getElementById('last-cruce').innerText = `Último cruce: ${ahora} | ${cTotal} activos`;
+
+g_diarioOperativo = {
+    fechaSistema,
+    horaConsulta,
+    totales: {
+        total: cTotal,
+        presente: cPres,
+        supervisores: cSup,
+        gts: cGts,
+        ausencias: cAus,
+        exceso: cExc,
+        inactivos: cInact
+    },
+    contadores: { ...g_wp },
+    ocupacion: { ...g_ocupacion },
+    filas: filasDiario
+};
 
 guardarHistorial({ hora: ahora, total: cTotal, pres: cPres, aus: cAus, gts: cGts });
 filtrar('ALL');
