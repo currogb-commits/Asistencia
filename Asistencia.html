@@ -379,6 +379,13 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalOcup')">Cerrar</button>
 </div>
 </div>
+<div id="modalDiarioOperativo" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--primary); max-width: 760px; width: 100%;">
+<p class="modal-title">Diario Operativo</p>
+<div id="diario-operativo-body" style="max-height: 65vh; overflow-y:auto; margin-bottom:16px; padding-right:4px; color:var(--text);"></div>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarDiarioOperativo()">Cerrar</button>
+</div>
+</div>
 <div id="modalSup" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--sup);">
 <p class="modal-title"> Gestionar Supervisores</p>
@@ -410,15 +417,24 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Fecha</label><input type="date" id="inc-fecha" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipo</label>
 <select id="inc-tipo" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; cursor: pointer;">
-<option value="Baja médica">Baja médica</option>
-<option value="Horas médicas">Horas médicas</option>
-<option value="Permiso">Permiso</option>
-<option value="Horas sindicales">Horas sindicales</option>
-<option value="Formación">Formación</option>
-<option value="Retraso">Retraso</option>
-<option value="Consulta médica">Consulta médica</option>
-<option value="Otros">Otros</option>
 </select>
+</div>
+<div style="grid-column: span 2; margin-top: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipos de ausencia</span>
+        <button class="btn-clear" type="button" onclick="cancelarEdicionTipo();">Tipos</button>
+    </div>
+    <div id="tipos-ausencia-list" style="max-height:130px; overflow-y:auto; margin-bottom:10px;"></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+        <input type="text" id="tipo-nuevo-nombre" placeholder="Nombre del tipo" style="width:100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;">
+        <input type="text" id="tipo-nuevo-codigo" placeholder="Código" style="width:100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;">
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <button class="btn-modal btn-modal-primary" type="button" id="tipo-nuevo-boton" onclick="agregarTipoAusencia()">Añadir tipo</button>
+        <button class="btn-modal btn-modal-secondary" type="button" onclick="cancelarEdicionTipo()">Cancelar</button>
+        <button class="btn-clear" type="button" onclick="restaurarTiposAusenciaDefault()">Restaurar por defecto</button>
+    </div>
+    <div id="tipo-ausencia-error" style="font-size:12px; color:#d23; margin-top:8px;"></div>
 </div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Hora Inicio (Opcional)</label><input type="time" id="inc-inicio" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Hora Fin (Opcional)</label><input type="time" id="inc-fin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
@@ -502,6 +518,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <button id="btn-ocup" class="btn-main btn-ocup" onclick="mostrarOcupacion()"> 2. VER OCUPACIÓN</button>
 <button id="btn-whatsapp" class="btn-main btn-wp" onclick="abrirWhatsApp()"> 3. WHATSAPP</button>
 <button id="btn-export" class="btn-main btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
+<button id="btn-diario" class="btn-main" onclick="abrirDiarioOperativo()"> 5. DIARIO OPERATIVO</button>
 </div>
 
 <div class="stats">
@@ -570,6 +587,21 @@ let g_historial = []; // últimos 3 cruces
 let g_rosterByPin = new Map();
 let g_rosterList = [];
 let g_diarioOperativo = null;
+
+const TIPOS_AUSENCIA_DEFAULT = [
+    { tipo: 'Horas sindicales', codigo: 'HS' },
+    { tipo: 'Horas médicas', codigo: 'HM' },
+    { tipo: 'Baja médica', codigo: 'BE' },
+    { tipo: 'Permiso', codigo: 'Pe' },
+    { tipo: 'Formación', codigo: 'F' },
+    { tipo: 'Retraso', codigo: 'R' },
+    { tipo: 'Consulta médica', codigo: 'HM' },
+    { tipo: 'Otros', codigo: 'Otros' },
+    { tipo: 'Ausencia injustificada', codigo: 'AI' },
+    { tipo: 'Excedencia', codigo: 'Ex' }
+];
+let g_tiposAusencia = [];
+let g_tipoAusenciaEditIndex = null;
 
 // ============================================================
 // RELOJ
@@ -1068,6 +1100,23 @@ const ahora = horaConsulta;
 document.getElementById('last-cruce').innerText = `Último cruce: ${ahora} | ${cTotal} activos`;
 
 g_diarioOperativo = {
+    fecha: fechaSistema,
+    hora_cruce: horaConsulta,
+    resumen: {
+        total: cTotal,
+        presente: cPres,
+        supervisores: cSup,
+        gts: cGts,
+        ausencias: cAus,
+        exceso: cExc,
+        inactivos: cInact
+    },
+    filas: filasDiario,
+    entradas: { ...g_entradas },
+    salidas: { ...g_salidas },
+    ocupacion: { ...g_ocupacion },
+    incidencias_dia: g_incidencias.filter(inc => inc.fecha === fechaSistema),
+    // compatibilidad hacia atrás
     fechaSistema,
     horaConsulta,
     totales: {
@@ -1079,9 +1128,7 @@ g_diarioOperativo = {
         exceso: cExc,
         inactivos: cInact
     },
-    contadores: { ...g_wp },
-    ocupacion: { ...g_ocupacion },
-    filas: filasDiario
+    contadores: { ...g_wp }
 };
 
 guardarHistorial({ hora: ahora, total: cTotal, pres: cPres, aus: cAus, gts: cGts });
@@ -1286,6 +1333,44 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none')
 });
 }
 
+function abrirDiarioOperativo() {
+    renderDiarioOperativo();
+    document.getElementById('modalDiarioOperativo').style.display = 'flex';
+}
+
+function cerrarDiarioOperativo() {
+    document.getElementById('modalDiarioOperativo').style.display = 'none';
+}
+
+function renderDiarioOperativo() {
+    const body = document.getElementById('diario-operativo-body');
+    if (!g_diarioOperativo) {
+        body.innerHTML = '<p style="color:var(--text-muted); margin:0;">No existe un Diario Operativo. Ejecute primero CRUZAR DATOS.</p>';
+        return;
+    }
+
+    const resumen = g_diarioOperativo.resumen || {};
+    const totalFilas = Array.isArray(g_diarioOperativo.filas) ? g_diarioOperativo.filas.length : 0;
+
+    body.innerHTML = `
+        <div style="display:grid; gap:12px;">
+            <div><b>Fecha</b><div style="margin-top:6px;">${g_diarioOperativo.fecha || '-'}</div></div>
+            <div><b>Hora</b><div style="margin-top:6px;">${g_diarioOperativo.hora_cruce || '-'}</div></div>
+            <div><b>Total de filas</b><div style="margin-top:6px;">${totalFilas}</div></div>
+            <div style="margin-top:12px;"><b>Resumen</b></div>
+            <div style="display:grid; gap:8px; padding-left:8px;">
+                <div>Total: ${resumen.total ?? '-'}</div>
+                <div>Presente: ${resumen.presente ?? '-'}</div>
+                <div>Supervisores: ${resumen.supervisores ?? '-'}</div>
+                <div>GTS: ${resumen.gts ?? '-'}</div>
+                <div>Ausencias: ${resumen.ausencias ?? '-'}</div>
+                <div>Exceso: ${resumen.exceso ?? '-'}</div>
+                <div>Inactivos: ${resumen.inactivos ?? '-'}</div>
+            </div>
+        </div>
+    `;
+}
+
 // INCIDENCIAS v6 - INICIO
 let g_incidencias = [];
 
@@ -1309,6 +1394,150 @@ function inicializarIncidencias() {
 
 function guardarIncidenciasLocales() {
     localStorage.setItem('wfm_incidencias_v6', JSON.stringify(g_incidencias));
+}
+
+function cargarTiposAusencia() {
+    const saved = localStorage.getItem('wfm_tipos_ausencia');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.every(item => item && typeof item.tipo === 'string' && typeof item.codigo === 'string')) {
+                g_tiposAusencia = parsed;
+            } else {
+                throw new Error('Formato inválido');
+            }
+        } catch (e) {
+            g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
+            guardarTiposAusencia();
+        }
+    } else {
+        g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
+        guardarTiposAusencia();
+    }
+}
+
+function guardarTiposAusencia() {
+    localStorage.setItem('wfm_tipos_ausencia', JSON.stringify(g_tiposAusencia));
+}
+
+function obtenerCodigoAusencia(tipo) {
+    const found = g_tiposAusencia.find(item => item.tipo === tipo);
+    return found ? found.codigo : tipo;
+}
+
+function restaurarTiposAusenciaDefault() {
+    g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
+    guardarTiposAusencia();
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
+    mostrarToast('✅ Tipos de ausencia restaurados a valores por defecto');
+}
+
+function renderTipoAusenciaSelect(selectedTipo) {
+    const select = document.getElementById('inc-tipo');
+    if (!select) return;
+    select.innerHTML = '';
+    g_tiposAusencia.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.tipo;
+        opt.innerText = item.tipo;
+        select.appendChild(opt);
+    });
+    if (selectedTipo && !g_tiposAusencia.some(item => item.tipo === selectedTipo)) {
+        const opt = document.createElement('option');
+        opt.value = selectedTipo;
+        opt.innerText = `${selectedTipo} (sin configurar)`;
+        select.appendChild(opt);
+    }
+    select.value = selectedTipo || (g_tiposAusencia[0] && g_tiposAusencia[0].tipo) || '';
+}
+
+function renderTiposAusenciaUI() {
+    const container = document.getElementById('tipos-ausencia-list');
+    if (!container) return;
+    container.innerHTML = '';
+    g_tiposAusencia.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.padding = '6px 0';
+        row.style.borderBottom = '1px solid var(--border)';
+        row.innerHTML = `
+            <div style="display:flex; gap:12px; align-items:center;">
+                <span style="font-size:13px;"><b>${escapeHTML(item.tipo)}</b></span>
+                <span style="font-size:12px; color:var(--text-muted);">${escapeHTML(item.codigo)}</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button class="btn-clear" type="button" onclick="editarTipoAusencia(${index})">Editar</button>
+                <button class="btn-clear" type="button" onclick="eliminarTipoAusencia(${index})">Eliminar</button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function agregarTipoAusencia() {
+    const nombreEl = document.getElementById('tipo-nuevo-nombre');
+    const codigoEl = document.getElementById('tipo-nuevo-codigo');
+    const errorEl = document.getElementById('tipo-ausencia-error');
+    if (!nombreEl || !codigoEl || !errorEl) return;
+    const tipo = nombreEl.value.trim();
+    const codigo = codigoEl.value.trim();
+    errorEl.innerText = '';
+    if (!tipo || !codigo) {
+        errorEl.innerText = 'Tipo y código son obligatorios.';
+        return;
+    }
+    const duplicate = g_tiposAusencia.find((item, idx) => item.tipo === tipo && idx !== g_tipoAusenciaEditIndex);
+    if (duplicate) {
+        errorEl.innerText = 'Ya existe un tipo con ese nombre.';
+        return;
+    }
+    if (g_tipoAusenciaEditIndex !== null) {
+        g_tiposAusencia[g_tipoAusenciaEditIndex] = { tipo, codigo };
+        g_tipoAusenciaEditIndex = null;
+        document.getElementById('tipo-nuevo-boton').innerText = 'Añadir tipo';
+    } else {
+        g_tiposAusencia.push({ tipo, codigo });
+    }
+    guardarTiposAusencia();
+    renderTipoAusenciaSelect(tipo);
+    renderTiposAusenciaUI();
+    nombreEl.value = '';
+    codigoEl.value = '';
+}
+
+function editarTipoAusencia(index) {
+    const tipo = g_tiposAusencia[index];
+    if (!tipo) return;
+    g_tipoAusenciaEditIndex = index;
+    document.getElementById('tipo-nuevo-nombre').value = tipo.tipo;
+    document.getElementById('tipo-nuevo-codigo').value = tipo.codigo;
+    document.getElementById('tipo-nuevo-boton').innerText = 'Guardar cambios';
+    document.getElementById('tipo-ausencia-error').innerText = '';
+}
+
+function eliminarTipoAusencia(index) {
+    const tipo = g_tiposAusencia[index];
+    if (!tipo) return;
+    if (g_incidencias.some(inc => inc.tipo === tipo.tipo)) {
+        mostrarToast('No se puede eliminar: este tipo está en uso.');
+        return;
+    }
+    g_tiposAusencia.splice(index, 1);
+    guardarTiposAusencia();
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
+}
+
+function cancelarEdicionTipo() {
+    g_tipoAusenciaEditIndex = null;
+    document.getElementById('tipo-nuevo-nombre').value = '';
+    document.getElementById('tipo-nuevo-codigo').value = '';
+    document.getElementById('tipo-nuevo-boton').innerText = 'Añadir tipo';
+    const errorEl = document.getElementById('tipo-ausencia-error');
+    if (errorEl) errorEl.innerText = '';
 }
 
 function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
@@ -1340,6 +1569,8 @@ function abrirModalIncidencias() {
         ? 'Selecciona un empleado del cuadrante o escribe manualmente.'
         : 'Sin cuadrante cargado. Puedes completar manualmente.';
     document.getElementById('inc-fecha').value = new Date().toISOString().split('T')[0];
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
     renderIncidencias();
     document.getElementById('modalIncidencias').style.display = 'flex';
 }
@@ -1424,6 +1655,7 @@ function editarIncidencia(id) {
     const inc = g_incidencias.find(i => i.id === id);
     if (!inc) return;
 
+    renderTipoAusenciaSelect(inc.tipo);
     document.getElementById('inc-id').value = inc.id;
     document.getElementById('inc-pin').value = inc.pin;
     document.getElementById('inc-empleado').value = inc.empleado;
@@ -1483,6 +1715,7 @@ function renderIncidencias() {
 // INIT
 // ============================================================
 window.onload = function() {
+cargarTiposAusencia();
 inicializarIncidencias(); // INCIDENCIAS v6
 iniciarReloj();
 const theme = localStorage.getItem('wfm_theme') || 'light';
