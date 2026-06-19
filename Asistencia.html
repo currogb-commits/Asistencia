@@ -128,9 +128,40 @@ justify-content: center; gap: 8px;
 .btn-main:active { transform: translateY(3px); filter: brightness(0.9); }
 .btn-process { background: linear-gradient(135deg, #27ae60, #1e8449); box-shadow: 0 4px 0 #155d2e; }
 .btn-process:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+#btn-diario { background: linear-gradient(135deg, #8e44ad, #a569bd); box-shadow: 0 4px 0 #6c3483; }
 .btn-wp { background: linear-gradient(135deg, #25D366, #1da851); box-shadow: 0 4px 0 #128c3a; display: none; }
 .btn-ocup { background: linear-gradient(135deg, #2c3e50, #1a252f); box-shadow: 0 4px 0 #0d1318; display: none; }
 .btn-export { background: linear-gradient(135deg, #16a085, #0e6655); box-shadow: 0 4px 0 #0a4a3d; display: none; }
+.agenda-wrap { display: grid; gap: 18px; }
+.agenda-seccion { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.agenda-seccion__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; }
+.agenda-seccion__header--success { color: #1e7f34; }
+.agenda-seccion__header--warning { color: #d35400; }
+.agenda-seccion__header--muted { color: #7f8c8d; }
+.agenda-seccion__header--info { color: #21618c; }
+.agenda-seccion__header--dark { color: #2c3e50; }
+.agenda-seccion__body { display: grid; gap: 10px; }
+.edit-highlight { animation: editFlash 1s ease forwards; }
+@keyframes editFlash { 0% { box-shadow: 0 0 0 rgba(46, 204, 113, 0); } 20% { box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.35); } 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
+.agenda-empty { padding: 16px; border: 1px dashed var(--border); border-radius: 10px; color: var(--text-muted); font-size: 13px; text-align: center; }
+.incidencia-card { background: var(--bg); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.incidencia-card--activa { border-color: #27ae60; }
+.incidencia-card--proxima { border-color: #e67e22; }
+.incidencia-card--finalizada { border-color: #95a5a6; }
+.incidencia-card--futura { border-color: #3498db; }
+.incidencia-card--pasada { border-color: #34495e; }
+.incidencia-card__top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.incidencia-card__title { font-size: 14px; font-weight: 700; }
+.incidencia-card__pin { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+.incidencia-card__meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--text-muted); }
+.incidencia-card__tag { background: rgba(52, 152, 219, 0.1); border-radius: 999px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.incidencia-card__line { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.incidencia-card__line b { color: var(--text); }
+.incidencia-card__footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.incidencia-card__actions { display: flex; gap: 8px; }
+.incidencia-card__text { color: var(--text); font-size: 13px; line-height: 1.4; white-space: pre-wrap; }
+.incidencia-card button { border: none; background: none; cursor: pointer; font-size: 14px; }
+
 /* =========================================
 DASHBOARD STATS
 ========================================= */
@@ -313,6 +344,28 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 
 /* Validación vacío */
 .input-error { border-color: var(--danger) !important; }
+/* AGENDA OPERATIVA v6 */
+#inc-autocomplete { position: relative; }
+#inc-sugerencias {
+    display: none;
+    margin-top: 4px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background: var(--card);
+    box-shadow: var(--shadow-lg);
+    max-height: 180px;
+    overflow-y: auto;
+}
+.inc-sugerencia-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+.inc-sugerencia-item:last-child { border-bottom: none; }
+.inc-sugerencia-item:hover { background: var(--table-hover); }
+#inc-roster-info { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+#inc-turno-detectado[readonly] { background: #f5f7fa; }
+/* AGENDA OPERATIVA v6 */
 </style>
 </head>
 <body>
@@ -321,7 +374,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div class="alarm-emoji"></div>
 <h2 style="color:var(--danger); margin-bottom:8px;">¡Revisión de Asistencia!</h2>
 <p style="color:var(--text-muted); font-size: 14px; margin-bottom:20px;">Han pasado 30 minutos. Extrae de nuevo los datos de Avaya y pulsa Cruzar.</p>
-<button id="btn-alarma-ok" class="btn-modal btn-modal-primary">ENTENDIDO</button>
+<button class="btn-modal btn-modal-primary" onclick="apagarAlarmaVisual()">ENTENDIDO</button>
 </div>
 </div>
 <div id="modalAyuda" class="modal-overlay">
@@ -338,23 +391,30 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <li><b>8. Exportar CSV:</b> Descarga el resultado del cruce como archivo Excel-compatible.</li>
 <li><b>9. Historial:</b> Los últimos 3 cruces quedan guardados abajo para consulta rápida.</li>
 </ul>
-<button class="btn-modal btn-modal-secondary" data-close-modal="modalAyuda">Cerrar Manual</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalAyuda')">Cerrar Manual</button>
 </div>
 </div>
 <div id="modalWP" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--wp);">
 <p class="modal-title"> Informe de WhatsApp</p>
 <textarea id="wp-text" class="modal-txt"></textarea>
-<button id="btn-wp-copy" class="btn-modal btn-modal-primary" style="background:var(--wp);"> COPIAR AL PORTAPAPELES</button>
-<button class="btn-modal btn-modal-secondary" data-close-modal="modalWP">Cerrar</button>
+<button class="btn-modal btn-modal-primary" style="background:var(--wp);" onclick="copiarTexto('wp-text')"> COPIAR AL PORTAPAPELES</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalWP')">Cerrar</button>
 </div>
 </div>
 <div id="modalOcup" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--primary);">
 <p class="modal-title"> Curva de Ocupación</p>
 <div id="ocup-container" style="max-height:320px; overflow-y:auto; margin-bottom:12px;"></div>
-<button id="btn-ocup-copy" class="btn-modal btn-modal-primary">COPIAR PARA EXCEL</button>
-<button class="btn-modal btn-modal-secondary" data-close-modal="modalOcup">Cerrar</button>
+<button class="btn-modal btn-modal-primary" onclick="copiarOcupacion()">COPIAR PARA EXCEL</button>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalOcup')">Cerrar</button>
+</div>
+</div>
+<div id="modalDiarioOperativo" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--primary); max-width: 760px; width: 100%;">
+<p class="modal-title">Diario Operativo</p>
+<div id="diario-operativo-body" style="max-height: 65vh; overflow-y:auto; margin-bottom:16px; padding-right:4px; color:var(--text);"></div>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarDiarioOperativo()">Cerrar</button>
 </div>
 </div>
 <div id="modalSup" class="modal-overlay">
@@ -363,12 +423,102 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <p style="font-size:12px; color:var(--text-muted); margin-bottom: 12px;">Haz clic en la X para eliminar un PIN. Los cambios se guardan automáticamente en este navegador.</p>
 <div class="sup-grid" id="sup-tags"></div>
 <div class="sup-add-row">
-<input type="text" id="sup-new-pin" placeholder="Nuevo PIN (ej: 8830)" maxlength="6">
-<button id="btn-sup-add" class="btn-sup-add">+ Añadir</button>
+<input type="text" id="sup-new-pin" placeholder="Nuevo PIN (ej: 8830)" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+<button class="btn-sup-add" onclick="agregarSupervisor()">+ Añadir</button>
 </div>
-<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" data-close-modal="modalSup">Cerrar</button>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalSup')">Cerrar</button>
 </div>
 </div>
+
+<div id="modalPlantilla" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--primary); width: 780px; max-width: 95vw;">
+<p class="modal-title">Maestro de Plantilla Operativa</p>
+<div class="grid-2">
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">PIN</label><input type="text" id="plantilla-pin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: 8830" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nombre</label><input type="text" id="plantilla-nombre" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Nombre completo"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Categoría</label><input type="text" id="plantilla-categoria" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: Operativo"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Observaciones</label><input type="text" id="plantilla-observaciones" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Notas internas"></div>
+<div style="grid-column: span 2; display:flex; align-items:center; gap: 10px;"><input type="checkbox" id="plantilla-activo" checked><label for="plantilla-activo" style="font-size:13px; color:var(--text);">Activo en plantilla</label></div>
+</div>
+<input type="hidden" id="plantilla-id">
+<div style="display:flex; gap:10px; margin-top:15px; margin-bottom: 18px; flex-wrap: wrap;">
+<button class="btn-modal btn-modal-primary" onclick="guardarPlantilla()">GUARDAR MIEMBRO</button>
+<button class="btn-modal btn-modal-secondary" onclick="limpiarFormularioPlantilla()">Limpiar</button>
+</div>
+<div style="margin-top:10px;">
+<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 12px;">
+<h3 style="font-size:14px; color:var(--text); margin:0;">Miembros de plantilla</h3>
+<input type="text" id="plantilla-buscar" class="search-box" placeholder="Buscar PIN, nombre, categoría..." oninput="renderPlantillaOperativa(this.value)">
+</div>
+<div id="plantilla-list" style="display:grid; gap:12px;"></div>
+</div>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalPlantilla')">Cerrar</button>
+</div>
+</div>
+
+<!-- INCIDENCIAS v6 - INICIO -->
+<div id="modalIncidencias" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--warning); width: 850px; max-width: 95vw;">
+<p class="modal-title"> Registro de Incidencias</p>
+<div class="grid-2">
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">PIN</label><input type="text" id="inc-pin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: 8830"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Empleado</label><input type="text" id="inc-empleado" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Nombre completo"></div>
+<div style="grid-column: span 2;">
+    <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Buscar empleado</label>
+    <div id="inc-autocomplete" style="position:relative;">
+        <input type="text" id="inc-buscar-empleado" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Buscar por PIN o nombre..." oninput="renderSugerenciasAgenda(buscarEmpleadoAgenda(this.value))">
+        <div id="inc-sugerencias"></div>
+    </div>
+    <div id="inc-roster-info">Ingresa PIN o nombre para buscar el turno.</div>
+</div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Fecha</label><input type="date" id="inc-fecha" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipo</label>
+<select id="inc-tipo" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; cursor: pointer;">
+</select>
+</div>
+<div style="grid-column: span 2; margin-top: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipos de ausencia</span>
+        <button class="btn-clear" type="button" onclick="cancelarEdicionTipo();">Tipos</button>
+    </div>
+    <div id="tipos-ausencia-list" style="max-height:130px; overflow-y:auto; margin-bottom:10px;"></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+        <input type="text" id="tipo-nuevo-nombre" placeholder="Nombre del tipo" style="width:100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;">
+        <input type="text" id="tipo-nuevo-codigo" placeholder="Código" style="width:100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;">
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <button class="btn-modal btn-modal-primary" type="button" id="tipo-nuevo-boton" onclick="agregarTipoAusencia()">Añadir tipo</button>
+        <button class="btn-modal btn-modal-secondary" type="button" onclick="cancelarEdicionTipo()">Cancelar</button>
+        <button class="btn-clear" type="button" onclick="restaurarTiposAusenciaDefault()">Restaurar por defecto</button>
+    </div>
+    <div id="tipo-ausencia-error" style="font-size:12px; color:#d23; margin-top:8px;"></div>
+</div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Hora Inicio (Opcional)</label><input type="time" id="inc-inicio" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Hora Fin (Opcional)</label><input type="time" id="inc-fin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Supervisor que registra</label><input type="text" id="inc-supervisor" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="PIN Supervisor"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Turno detectado</label><input type="text" id="inc-turno-detectado" readonly style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Turno detectado desde cuadrante"></div>
+</div>
+<div style="margin-top: 10px;">
+<label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Motivo / Observaciones</label>
+<textarea id="inc-obs" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; resize: vertical; min-height: 60px;" placeholder="Detalla la incidencia..."></textarea>
+</div>
+<input type="hidden" id="inc-id">
+<div style="display:flex; gap:10px; margin-top:15px; margin-bottom: 25px;">
+<button class="btn-modal btn-modal-primary" onclick="guardarIncidencia()">GUARDAR INCIDENCIA</button>
+<button class="btn-modal btn-modal-secondary" onclick="limpiarFormularioIncidencia()">Limpiar</button>
+</div>
+<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+<h3 style="font-size:14px; color:var(--text); margin:0;">Histórico de Incidencias</h3>
+<div style="display:flex; gap:8px;">
+<button class="btn-clear" onclick="alert('Función de importar en desarrollo...')">📥 Importar</button>
+<button class="btn-clear" onclick="alert('Función de exportar en desarrollo...')">📤 Exportar</button>
+</div>
+</div>
+<div id="agenda-incidencias" class="agenda-wrap"></div>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalIncidencias')">Cerrar</button>
+</div>
+</div>
+<!-- INCIDENCIAS v6 - FIN -->
 
 <div class="container">
 <div class="header">
@@ -380,15 +530,19 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div class="top-btns">
 <div class="time-control" id="box-tiempo">
 <span id="modo-tiempo">Tiempo Real</span>:
-<input type="time" id="hora-consulta">
-<button id="btn-reloj" style="display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; margin-left:4px;" title="Volver al reloj automático"> ⏱ </button>
+<input type="time" id="hora-consulta" onchange="marcarManual()">
+<button id="btn-reloj" onclick="iniciarReloj()" style="display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; margin-left:4px;" title="Volver al reloj automático"> ⏱ </button>
 </div>
-<button class="btn-top" id="alarm-btn">
+<button class="btn-top" id="alarm-btn" onclick="toggleAlarma()">
 <span id="alarm-status-label">Alarma</span> <span id="alarm-countdown" style="font-weight:800;"></span>
 </button>
-<button id="btn-open-sup" class="btn-top"> SUP</button>
-<button class="btn-top" id="btn-darkmode"> Oscuro</button>
-<button id="btn-ayuda" class="btn-top">? Ayuda</button>
+<!-- INCIDENCIAS v6 - INICIO -->
+<button class="btn-top" onclick="abrirModalIncidencias()"> 📝 Incidencias</button>
+<button class="btn-top" onclick="abrirModalPlantilla()"> 📋 Plantilla</button>
+<!-- INCIDENCIAS v6 - FIN -->
+<button class="btn-top" onclick="abrirModalSup()"> SUP</button>
+<button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
+<button class="btn-top" onclick="document.getElementById('modalAyuda').style.display='flex'">? Ayuda</button>
 </div>
 </div>
 
@@ -396,50 +550,51 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <div class="card card-siebel">
 <div class="card-header">
 <h3> 1. Cuadrante (PGPlanning)</h3>
-<button class="btn-clear" data-clear-id="raw-cuadrante"> Limpiar</button>
+<button class="btn-clear" onclick="limpiarCaja('raw-cuadrante')"> Limpiar</button>
 </div>
-<textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..."></textarea>
+<textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..." oninput="guardarLocal()"></textarea>
 </div>
 <div class="card card-avaya">
 <div class="card-header">
 <h3> 2. Logados en AVAYA</h3>
-<button class="btn-clear" data-clear-id="raw-avaya"> Limpiar</button>
+<button class="btn-clear" onclick="limpiarCaja('raw-avaya')"> Limpiar</button>
 </div>
-<textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..."></textarea>
+<textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..." oninput="guardarLocal()"></textarea>
 </div>
 </div>
 
 <div class="btn-group">
-<button id="btn-process" class="btn-main btn-process"> 1. CRUZAR DATOS</button>
-<button id="btn-ocup" class="btn-main btn-ocup"> 2. VER OCUPACIÓN</button>
-<button id="btn-whatsapp" class="btn-main btn-wp"> 3. WHATSAPP</button>
-<button id="btn-export" class="btn-main btn-export"> 4. EXPORTAR CSV</button>
+<button class="btn-main btn-process" onclick="animarYCruzar()"> 1. CRUZAR DATOS</button>
+<button id="btn-ocup" class="btn-main btn-ocup" onclick="mostrarOcupacion()"> 2. VER OCUPACIÓN</button>
+<button id="btn-whatsapp" class="btn-main btn-wp" onclick="abrirWhatsApp()"> 3. WHATSAPP</button>
+<button id="btn-export" class="btn-main btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
+<button id="btn-diario" class="btn-main" onclick="abrirDiarioOperativo()"> 5. DIARIO OPERATIVO</button>
 </div>
 
 <div class="stats">
-<div class="stat-box active" id="f-all" style="border-color:var(--primary)" data-filter="ALL">Total<span class="stat-num" id="s-total">0</span></div>
-<div class="stat-box" id="f-pres" style="border-color:var(--success)" data-filter="PRESENTE">Gestores OK<span class="stat-num" id="s-pres">0</span></div>
-<div class="stat-box" id="f-sup" style="border-color:var(--sup)" data-filter="SUPERVISOR">Supervisores<span class="stat-num" id="s-sup">0</span></div>
-<div class="stat-box" id="f-gts" style="border-color:var(--gts)" data-filter="GTS">Línea GTS<span class="stat-num" id="s-gts">0</span></div>
-<div class="stat-box" id="f-aus" style="border-color:var(--danger)" data-filter="AUSENCIA">Ausencias<span class="stat-num" id="s-aus">0</span></div>
-<div class="stat-box" id="f-exc" style="border-color:var(--warning)" data-filter="EXCESO">Log. F. Turno<span class="stat-num" id="s-exc">0</span></div>
-<div class="stat-box" id="f-inact" style="border-color:var(--neutral)" data-filter="INACTIVO">Finalizados<span class="stat-num" id="s-inact">0</span></div>
+<div class="stat-box active" id="f-all" style="border-color:var(--primary)" onclick="filtrar('ALL')">Total<span class="stat-num" id="s-total">0</span></div>
+<div class="stat-box" id="f-pres" style="border-color:var(--success)" onclick="filtrar('PRESENTE')">Gestores OK<span class="stat-num" id="s-pres">0</span></div>
+<div class="stat-box" id="f-sup" style="border-color:var(--sup)" onclick="filtrar('SUPERVISOR')">Supervisores<span class="stat-num" id="s-sup">0</span></div>
+<div class="stat-box" id="f-gts" style="border-color:var(--gts)" onclick="filtrar('GTS')">Línea GTS<span class="stat-num" id="s-gts">0</span></div>
+<div class="stat-box" id="f-aus" style="border-color:var(--danger)" onclick="filtrar('AUSENCIA')">Ausencias<span class="stat-num" id="s-aus">0</span></div>
+<div class="stat-box" id="f-exc" style="border-color:var(--warning)" onclick="filtrar('EXCESO')">Log. F. Turno<span class="stat-num" id="s-exc">0</span></div>
+<div class="stat-box" id="f-inact" style="border-color:var(--neutral)" onclick="filtrar('INACTIVO')">Finalizados<span class="stat-num" id="s-inact">0</span></div>
 </div>
 
 <div id="tabla-container">
 <div class="table-toolbar">
-<input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." disabled>
+<input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." oninput="buscarTabla()" disabled>
 <span id="last-cruce">Sin datos, pulsa CRUZAR</span>
 </div>
 <div class="table-wrap">
 <table id="tabla-res">
 <thead>
 <tr>
-<th data-col-index="0">PIN <span class="sort-icon"></span></th>
-<th data-col-index="1">Empleado <span class="sort-icon"></span></th>
-<th data-col-index="2">Turno (Cuadrante) <span class="sort-icon"></span></th>
-<th data-col-index="3">Estado Avaya <span class="sort-icon"></span></th>
-<th data-col-index="4">Situación Actual <span class="sort-icon"></span></th>
+<th onclick="sortTable(0)">PIN <span class="sort-icon"></span></th>
+<th onclick="sortTable(1)">Empleado <span class="sort-icon"></span></th>
+<th onclick="sortTable(2)">Turno (Cuadrante) <span class="sort-icon"></span></th>
+<th onclick="sortTable(3)">Estado Avaya <span class="sort-icon"></span></th>
+<th onclick="sortTable(4)">Situación Actual <span class="sort-icon"></span></th>
 </tr>
 </thead>
 <tbody>
@@ -479,6 +634,25 @@ let alarmEnd = null;
 let audioCtx = null;
 let sortDir = {}; // columna -> asc/desc
 let g_historial = []; // últimos 3 cruces
+let g_rosterByPin = new Map();
+let g_rosterList = [];
+let g_personalMaestro = [];
+let g_diarioOperativo = null;
+
+const TIPOS_AUSENCIA_DEFAULT = [
+    { tipo: 'Horas sindicales', codigo: 'HS' },
+    { tipo: 'Horas médicas', codigo: 'HM' },
+    { tipo: 'Baja médica', codigo: 'BE' },
+    { tipo: 'Permiso', codigo: 'Pe' },
+    { tipo: 'Formación', codigo: 'F' },
+    { tipo: 'Retraso', codigo: 'R' },
+    { tipo: 'Consulta médica', codigo: 'HM' },
+    { tipo: 'Otros', codigo: 'Otros' },
+    { tipo: 'Ausencia injustificada', codigo: 'AI' },
+    { tipo: 'Excedencia', codigo: 'Ex' }
+];
+let g_tiposAusencia = [];
+let g_tipoAusenciaEditIndex = null;
 
 // ============================================================
 // RELOJ
@@ -526,7 +700,7 @@ container.innerHTML = "";
 PIN_SUPERVISORES.forEach(pin => {
 const tag = document.createElement('div');
 tag.className = 'sup-tag';
-tag.innerHTML = `${pin} <button data-pin="${pin}" title="Eliminar">✖</button>`;
+tag.innerHTML = `${pin} <button onclick="eliminarSupervisor('${pin}')" title="Eliminar">✖</button>`;
 container.appendChild(tag);
 });
 }
@@ -538,7 +712,7 @@ renderSupTags();
 function agregarSupervisor() {
 const input = document.getElementById('sup-new-pin');
 const pin = input.value.trim().replace(/^0+/, "");
-if (!pin || !/^\d{3,6}$/.test(pin)) { mostrarToast("⚠️ PIN inválido (3-6 dígitos)"); return; }
+if (!pin || pin.length < 3 || pin.length > 6) { mostrarToast("⚠️ PIN inválido (3-6 dígitos)"); return; }
 if (PIN_SUPERVISORES.includes(pin)) { mostrarToast("⚠️ Ese PIN ya existe"); return; }
 PIN_SUPERVISORES.push(pin);
 guardarSupervisores(PIN_SUPERVISORES);
@@ -606,7 +780,7 @@ document.getElementById('modalAlarma').style.display = 'none';
 // ============================================================
 // UTILIDADES
 // ============================================================
-function cerrarModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 function mostrarToast(msg) {
 const t = document.createElement('div');
 t.className = 'toast'; t.innerText = msg;
@@ -614,7 +788,7 @@ document.body.appendChild(t);
 setTimeout(() => t.remove(), 3000);
 }
 function limpiarCaja(id) {
-document.getElementById(id).value = ""; // Se mantiene por ahora, pero se puede refactorizar
+document.getElementById(id).value = "";
 guardarLocal();
 }
 function guardarLocal() {
@@ -624,6 +798,330 @@ localStorage.setItem("wfm_cuadrante", document.getElementById("raw-cuadrante").v
 localStorage.setItem("wfm_avaya", document.getElementById("raw-avaya").value);
 }, 400);
 }
+
+function cargarPersonalMaestro() {
+    const guardado = localStorage.getItem('wfm_personal_maestro');
+    if (!guardado) {
+        g_personalMaestro = [];
+        return;
+    }
+    try {
+        const parsed = JSON.parse(guardado);
+        if (Array.isArray(parsed)) {
+            g_personalMaestro = parsed.map(persona => ({
+                pin: String(persona.pin || '').trim(),
+                nombre: String(persona.nombre || '').trim(),
+                categoria: String(persona.categoria || 'Otros').trim(),
+                activo: persona.activo !== false,
+                observaciones: String(persona.observaciones || '').trim()
+            })).filter(persona => persona.pin && persona.nombre);
+        } else {
+            g_personalMaestro = [];
+        }
+    } catch (e) {
+        g_personalMaestro = [];
+    }
+}
+
+function guardarPersonalMaestro() {
+    localStorage.setItem('wfm_personal_maestro', JSON.stringify(g_personalMaestro));
+}
+
+function buscarPersonaMaestro(query) {
+    const q = String(query || '').toLowerCase().trim();
+    if (!q) return [];
+    const resultados = [];
+    for (const persona of g_personalMaestro) {
+        const pin = String(persona.pin || '');
+        const nombre = String(persona.nombre || '').toLowerCase();
+        if (pin.includes(q) || nombre.includes(q)) {
+            resultados.push(persona);
+        }
+    }
+    resultados.sort((a, b) => {
+        if (a.activo !== b.activo) return a.activo ? -1 : 1;
+        const cmp = a.nombre.localeCompare(b.nombre, 'es');
+        return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
+    });
+    return resultados.slice(0, 8);
+}
+
+function abrirModalPlantilla() {
+    renderPlantillaOperativa();
+    limpiarFormularioPlantilla();
+    document.getElementById('modalPlantilla').style.display = 'flex';
+}
+
+function limpiarFormularioPlantilla() {
+    document.getElementById('plantilla-id').value = '';
+    document.getElementById('plantilla-pin').value = '';
+    document.getElementById('plantilla-nombre').value = '';
+    document.getElementById('plantilla-categoria').value = '';
+    document.getElementById('plantilla-observaciones').value = '';
+    document.getElementById('plantilla-activo').checked = true;
+}
+
+function guardarPlantilla() {
+    const originalPin = document.getElementById('plantilla-id').value.trim();
+    const pin = document.getElementById('plantilla-pin').value.trim();
+    const nombre = document.getElementById('plantilla-nombre').value.trim();
+    const categoria = document.getElementById('plantilla-categoria').value.trim() || 'Otros';
+    const observaciones = document.getElementById('plantilla-observaciones').value.trim();
+    const activo = document.getElementById('plantilla-activo').checked;
+
+    if (!pin || !nombre) {
+        mostrarToast('⚠️ PIN y nombre son obligatorios');
+        return;
+    }
+    if (pin.length < 3 || pin.length > 6) {
+        mostrarToast('⚠️ El PIN debe tener entre 3 y 6 dígitos');
+        return;
+    }
+    if (originalPin && originalPin !== pin) {
+        if (g_personalMaestro.some(p => p.pin === pin)) {
+            mostrarToast('⚠️ Ya existe otro miembro con ese PIN');
+            return;
+        }
+        if (g_incidencias.some(inc => inc.pin === originalPin)) {
+            mostrarToast('⚠️ No se puede cambiar el PIN: este miembro tiene incidencias existentes');
+            return;
+        }
+    }
+
+    if (originalPin) {
+        const idx = g_personalMaestro.findIndex(p => p.pin === originalPin);
+        if (idx === -1) {
+            mostrarToast('⚠️ No se encontró el miembro original');
+            return;
+        }
+        g_personalMaestro[idx] = {
+            pin,
+            nombre,
+            categoria,
+            activo,
+            observaciones
+        };
+        mostrarToast('✅ Miembro actualizado');
+    } else {
+        if (g_personalMaestro.some(p => p.pin === pin)) {
+            mostrarToast('⚠️ Ya existe un miembro con ese PIN');
+            return;
+        }
+        g_personalMaestro.push({ pin, nombre, categoria, activo, observaciones });
+        mostrarToast('✅ Miembro añadido');
+    }
+    guardarPersonalMaestro();
+    renderPlantillaOperativa();
+    limpiarFormularioPlantilla();
+}
+
+function renderPlantillaOperativa(query) {
+    const cont = document.getElementById('plantilla-list');
+    if (!cont) return;
+    const q = String(query || '').toLowerCase().trim();
+    const items = g_personalMaestro
+        .filter(persona => {
+            if (!q) return true;
+            return persona.pin.includes(q) || persona.nombre.toLowerCase().includes(q) || persona.categoria.toLowerCase().includes(q);
+        })
+        .sort((a, b) => {
+            if (a.activo !== b.activo) return a.activo ? -1 : 1;
+            const cmp = a.nombre.localeCompare(b.nombre, 'es');
+            return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
+        });
+
+    if (!items.length) {
+        cont.innerHTML = '<div class="agenda-empty">No hay miembros que coincidan con la búsqueda</div>';
+        return;
+    }
+
+    cont.innerHTML = items.map(persona => {
+        const estado = persona.activo ? 'Activo' : 'Inactivo';
+        const estadoClass = persona.activo ? 'bg-ok' : 'bg-gray';
+        const observ = persona.observaciones ? `<div style="font-size:12px; color:var(--text-muted);">${escapeHTML(persona.observaciones)}</div>` : '';
+        return `
+            <div class="incidencia-card ${persona.activo ? '' : 'incidencia-card--finalizada'}" style="padding:12px;">
+                <div class="incidencia-card__top">
+                    <div class="incidencia-card__title">${escapeHTML(persona.nombre)} <span class="incidencia-card__pin">${escapeHTML(persona.pin)}</span></div>
+                    <div class="incidencia-card__tag ${estadoClass}">${estado}</div>
+                </div>
+                <div class="incidencia-card__line"><b>Categoría</b><span>${escapeHTML(persona.categoria)}</span></div>
+                ${observ}
+                <div class="incidencia-card__footer">
+                    <div></div>
+                    <div class="incidencia-card__actions">
+                        <button onclick="editarPlantilla('${persona.pin}')" title="Editar">✏️</button>
+                        <button onclick="eliminarPlantilla('${persona.pin}')" title="Eliminar">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function editarPlantilla(pin) {
+    const persona = g_personalMaestro.find(p => p.pin === String(pin).trim());
+    if (!persona) return;
+    document.getElementById('plantilla-id').value = persona.pin;
+    document.getElementById('plantilla-pin').value = persona.pin;
+    document.getElementById('plantilla-nombre').value = persona.nombre;
+    document.getElementById('plantilla-categoria').value = persona.categoria;
+    document.getElementById('plantilla-observaciones').value = persona.observaciones;
+    document.getElementById('plantilla-activo').checked = persona.activo;
+    const scrollTarget = document.querySelector('#modalPlantilla .grid-2');
+    if (scrollTarget) {
+        scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function eliminarPlantilla(pin) {
+    const persona = g_personalMaestro.find(p => p.pin === String(pin).trim());
+    if (!persona) return;
+    const tieneIncidencias = g_incidencias.some(inc => inc.pin === persona.pin);
+    if (tieneIncidencias) {
+        mostrarToast('⚠️ No se puede eliminar: existen incidencias para este PIN. Desactívalo en su lugar.');
+        return;
+    }
+    if (!confirm('¿Eliminar este miembro de la plantilla de forma permanente?')) return;
+    g_personalMaestro = g_personalMaestro.filter(p => p.pin !== persona.pin);
+    guardarPersonalMaestro();
+    renderPlantillaOperativa(document.getElementById('plantilla-buscar')?.value || '');
+    mostrarToast('🗑️ Miembro eliminado');
+}
+
+
+function editarPersonaMaestro(pin, datos) {
+    const idx = g_personalMaestro.findIndex(p => p.pin === String(pin || '').trim());
+    if (idx === -1) return false;
+    const persona = g_personalMaestro[idx];
+    if (datos.nombre !== undefined) persona.nombre = String(datos.nombre || '').trim();
+    if (datos.categoria !== undefined) persona.categoria = String(datos.categoria || 'Otros').trim();
+    if (datos.activo !== undefined) persona.activo = datos.activo === true;
+    if (datos.observaciones !== undefined) persona.observaciones = String(datos.observaciones || '').trim();
+    g_personalMaestro[idx] = persona;
+    guardarPersonalMaestro();
+    return true;
+}
+
+function eliminarPersonaMaestro(pin) {
+    const clave = String(pin || '').trim();
+    const longitudAnterior = g_personalMaestro.length;
+    g_personalMaestro = g_personalMaestro.filter(p => p.pin !== clave);
+    if (g_personalMaestro.length !== longitudAnterior) {
+        guardarPersonalMaestro();
+        return true;
+    }
+    return false;
+}
+
+// AGENDA OPERATIVA v6 - INICIO
+function construirRosterDesdeCuadrante(textoCuadrante) {
+    g_rosterByPin = new Map();
+    g_rosterList = [];
+
+    if (!textoCuadrante) return g_rosterList;
+
+    textoCuadrante.split('\n').forEach(linea => {
+        const matchPin = linea.match(/\b0*(\d{3,6})\b/);
+        if (matchPin) {
+            const pin = matchPin[1];
+            const idx = linea.indexOf(matchPin[0]);
+            let nombre = linea.substring(0, idx).replace(/[\t";]/g,' ').trim();
+            if (nombre.endsWith(',')) nombre = nombre.slice(0,-1).trim();
+
+            let desp = linea.substring(idx + matchPin[0].length);
+            let horario = desp.replace(/^[\t,;\s"]+/,'').trim();
+            const fin = horario.search(/[\t,;]/);
+            if (fin > -1) horario = horario.substring(0, fin).trim();
+            horario = horario.replace(/["']/g,'');
+
+            if (pin && horario && !horario.toLowerCase().includes("libre")) {
+                const empleado = { pin, nombre, horario, turnoInicio: null, turnoFin: null };
+                const m = horario.match(/(\d{2}:\d{2})\s*[-\^]\s*(\d{2}:\d{2})/);
+                if (m) {
+                    empleado.turnoInicio = m[1];
+                    empleado.turnoFin = m[2];
+                }
+                g_rosterByPin.set(pin, empleado);
+                g_rosterList.push(empleado);
+            }
+        }
+    });
+
+    g_rosterList.sort((a, b) => {
+        const cmp = a.nombre.localeCompare(b.nombre, 'es');
+        return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
+    });
+
+    return g_rosterList;
+}
+
+function buscarEmpleadoAgenda(query) {
+    const q = String(query || "").toLowerCase().trim();
+    if (!q) return [];
+
+    const resultados = [];
+    const vistos = new Set();
+
+    const maestroMatches = buscarPersonaMaestro(query);
+    maestroMatches.forEach(persona => {
+        const pin = String(persona.pin || '');
+        const rosterItem = g_rosterByPin.get(pin);
+        resultados.push({
+            pin,
+            nombre: persona.nombre,
+            horario: rosterItem ? rosterItem.horario || 'Turno detectado' : 'No planificado hoy',
+            fuente: rosterItem ? 'maestro-cuadrante' : 'maestro'
+        });
+        vistos.add(pin);
+    });
+
+    for (const emp of g_rosterList) {
+        if (resultados.length >= 8) break;
+        if (vistos.has(emp.pin)) continue;
+        if (emp.pin.includes(q) || emp.nombre.toLowerCase().includes(q)) {
+            resultados.push({
+                pin: emp.pin,
+                nombre: emp.nombre,
+                horario: emp.horario || 'Turno detectado',
+                fuente: 'cuadrante'
+            });
+            vistos.add(emp.pin);
+        }
+    }
+
+    return resultados.slice(0, 8);
+}
+
+function renderSugerenciasAgenda(resultados) {
+    const cont = document.getElementById('inc-sugerencias');
+    if (!cont) return;
+    cont.innerHTML = '';
+
+    if (!resultados.length) {
+        cont.style.display = 'none';
+        return;
+    }
+
+    cont.style.display = 'block';
+    resultados.forEach(emp => {
+        const item = document.createElement('div');
+        item.className = 'inc-sugerencia-item';
+        item.innerHTML = `<strong>${emp.nombre}</strong> <span style="color:var(--text-muted);">(${emp.pin})</span><br><small>${emp.horario || 'Sin turno'}</small>`;
+        item.onclick = () => seleccionarEmpleadoSugerencia(emp);
+        cont.appendChild(item);
+    });
+}
+
+function seleccionarEmpleadoSugerencia(emp) {
+    document.getElementById('inc-pin').value = emp.pin;
+    document.getElementById('inc-empleado').value = emp.nombre;
+    document.getElementById('inc-turno-detectado').value = emp.horario || '';
+    document.getElementById('inc-buscar-empleado').value = `${emp.pin} ${emp.nombre}`;
+    document.getElementById('inc-roster-info').innerText = 'Cargado desde cuadrante. Ajusta manualmente si es necesario.';
+    renderSugerenciasAgenda([]);
+}
+// AGENDA OPERATIVA v6 - FIN
 
 // ============================================================
 // MOTOR TEMPORAL
@@ -666,6 +1164,7 @@ const txtCuadrante = document.getElementById('raw-cuadrante').value.trim();
 const txtAvaya = document.getElementById('raw-avaya').value.trim();
 const horaConsulta = document.getElementById('hora-consulta').value;
 const minsActual = timeToMins(horaConsulta);
+const fechaSistema = new Date().toISOString().split('T')[0];
 
 const boxC = document.getElementById('raw-cuadrante');
 const boxA = document.getElementById('raw-avaya');
@@ -723,6 +1222,7 @@ const tbody = document.querySelector('#tabla-res tbody');
 tbody.innerHTML = "";
 
 let cTotal=0, cPres=0, cAus=0, cGts=0, cExc=0, cInact=0, cSup=0;
+const filasDiario = [];
 const analizados = new Set();
 
 cuadranteEsperados.forEach((datos, pin) => {
@@ -739,6 +1239,7 @@ if ((datos.horario.includes('^') || datos.horario.toUpperCase().includes('GTS'))
 }
 
 let estadoHTML="", claseCSS="", filterGroup="";
+let incidenciaActiva = null;
 
 if (esTurnoTrabajo) {
 const m = datos.horario.match(/(\d{2}:\d{2})\s*[-\^]\s*(\d{2}:\d{2})/);
@@ -761,7 +1262,10 @@ if (esSupervisor) {
         estadoHTML='<span class="pill bg-sup">SUPERVISOR</span>';
         filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
     } else {
-        estadoHTML='<span class="pill bg-err">AUSENCIA SUP.</span>';
+        incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
+        estadoHTML = incidenciaActiva
+            ? `<span class="pill bg-err">${formatearIncidenciaParaEstado(incidenciaActiva)}</span>`
+            : '<span class="pill bg-err">AUSENCIA SUP.</span>';
         claseCSS='row-absent'; filterGroup='AUSENCIA'; cAus++; g_wp.s_aus++;
     }
 } else if (esGTS) {
@@ -778,7 +1282,10 @@ if (esSupervisor) {
         estadoHTML='<span class="pill bg-ok">PRESENTE</span>';
         filterGroup='PRESENTE'; cPres++; g_wp.g_real++;
     } else {
-        estadoHTML='<span class="pill bg-err">AUSENCIA</span>';
+        incidenciaActiva = buscarIncidenciaActiva(pin, fechaSistema, horaConsulta);
+        estadoHTML = incidenciaActiva
+            ? `<span class="pill bg-err">${formatearIncidenciaParaEstado(incidenciaActiva)}</span>`
+            : '<span class="pill bg-err">AUSENCIA</span>';
         claseCSS='row-absent'; filterGroup='AUSENCIA'; cAus++; g_wp.g_aus++;
     }
 }
@@ -808,11 +1315,24 @@ estadoHTML='<span class="pill bg-gray">JUSTIFICADO</span>';
 claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
 }
 }
+const estadoTexto = estadoHTML.replace(/<[^>]+>/g, '').trim();
+filasDiario.push({
+    pin,
+    nombre: datos.nombre,
+    horario: datos.horario,
+    iconoAvaya,
+    estado: estadoTexto,
+    estadoHTML,
+    tipo: filterGroup,
+    clase: claseCSS,
+    logado,
+    esSupervisor,
+    esGTS,
+    esTurnoTrabajo,
+    incidencia: incidenciaActiva || null
+});
 
-let rowsHtml = ''; // 1. Iniciar string vacío
-cuadranteEsperados.forEach((datos, pin) => {
-    // ... (toda la lógica de arriba)
-    rowsHtml += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${datos.nombre.toLowerCase()}" class="${claseCSS}">
+tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${datos.nombre.toLowerCase()}" class="${claseCSS}">
 <td><b>${pin}</b></td>
 <td>${datos.nombre}</td>
 <td><b>${datos.horario}</b></td>
@@ -833,8 +1353,24 @@ filterGroup='SUPERVISOR'; claseCSS='row-sup'; cSup++; g_wp.s_real++;
 estadoHTML='<span class="pill bg-warn">NO PLANIFICADO</span>';
 filterGroup='EXCESO'; claseCSS='row-extra'; cExc++;
 }
+const estadoTexto = estadoHTML.replace(/<[^>]+>/g, '').trim();
+filasDiario.push({
+    pin,
+    nombre: nombreAvaya,
+    horario: 'Sin cuadrante hoy',
+    iconoAvaya: '✅ Logado',
+    estado: estadoTexto,
+    estadoHTML,
+    tipo: filterGroup,
+    clase: claseCSS,
+    logado: true,
+    esSupervisor,
+    esGTS: false,
+    esTurnoTrabajo: false,
+    incidencia: null
+});
 
-rowsHtml += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nombreAvaya.toLowerCase()}" class="${claseCSS}">
+tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nombreAvaya.toLowerCase()}" class="${claseCSS}">
 <td><b>${pin}</b></td>
 <td>${nombreAvaya}</td>
 <td><i>Sin cuadrante hoy</i></td>
@@ -843,8 +1379,6 @@ rowsHtml += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre="${nom
 </tr>`;
 }
 });
-
-tbody.innerHTML = rowsHtml; // 2. Asignar el HTML de una sola vez
 
 document.getElementById('s-total').innerText = cTotal;
 document.getElementById('s-pres').innerText = cPres;
@@ -861,6 +1395,38 @@ document.getElementById('buscador').disabled = false;
 
 const ahora = horaConsulta;
 document.getElementById('last-cruce').innerText = `Último cruce: ${ahora} | ${cTotal} activos`;
+
+g_diarioOperativo = {
+    fecha: fechaSistema,
+    hora_cruce: horaConsulta,
+    resumen: {
+        total: cTotal,
+        presente: cPres,
+        supervisores: cSup,
+        gts: cGts,
+        ausencias: cAus,
+        exceso: cExc,
+        inactivos: cInact
+    },
+    filas: filasDiario,
+    entradas: { ...g_entradas },
+    salidas: { ...g_salidas },
+    ocupacion: { ...g_ocupacion },
+    incidencias_dia: g_incidencias.filter(inc => inc.fecha === fechaSistema),
+    // compatibilidad hacia atrás
+    fechaSistema,
+    horaConsulta,
+    totales: {
+        total: cTotal,
+        presente: cPres,
+        supervisores: cSup,
+        gts: cGts,
+        ausencias: cAus,
+        exceso: cExc,
+        inactivos: cInact
+    },
+    contadores: { ...g_wp }
+};
 
 guardarHistorial({ hora: ahora, total: cTotal, pres: cPres, aus: cAus, gts: cGts });
 filtrar('ALL');
@@ -898,7 +1464,7 @@ document.getElementById('modalOcup').style.display = 'flex';
 function copiarOcupacion() {
 let txt = "Hora\tPlanificados\n";
 Object.keys(g_ocupacion).sort().forEach(h => {
-if (g_ocupacion[h] > 0 || (h >= "07:00" && h <= "23:30")) txt += `${h.replace('.',',')}\t${g_ocupacion[h]}\n`;
+if (g_ocupacion[h] > 0 || (h >= "07:00" && h <= "23:30")) txt += `${h}\t${g_ocupacion[h]}\n`;
 });
 navigator.clipboard.writeText(txt).then(() => {
 mostrarToast("✅ Ocupación copiada"); cerrarModal('modalOcup');
@@ -926,7 +1492,7 @@ document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active')
 const map = { ALL:'f-all', PRESENTE:'f-pres', SUPERVISOR:'f-sup', GTS:'f-gts', AUSENCIA:'f-aus', EXCESO:'f-exc', INACTIVO:'f-inact' };
 document.getElementById(map[tipo]).classList.add('active');
 document.getElementById('buscador').value = "";
-document.querySelectorAll('#tabla-res tbody tr').forEach(f => { // BUGFIX: era 'f', debe ser 'tr'
+document.querySelectorAll('#tabla-res tbody tr').forEach(f => {
 f.style.display = (tipo === 'ALL' || f.getAttribute('data-type') === tipo) ? "" : 'none';
 });
 }
@@ -1029,11 +1595,21 @@ const totalReales = g_wp.g_real + g_wp.gts_real;
 
 // Ausencias = Sólo las ausencias de gestores normales (GTS NUNCA son ausencias)
 const totalAusencias = g_wp.g_aus;
+const ausenciasActivas = Array.isArray(g_diarioOperativo?.filas)
+    ? g_diarioOperativo.filas.filter(f => f.tipo === 'AUSENCIA' && f.logado === false)
+    : [];
+const conteoCodigos = ausenciasActivas.reduce((acc, fila) => {
+    const codigo = fila.incidencia ? obtenerCodigoAusencia(fila.incidencia.tipo) : 'AI';
+    acc[codigo] = (acc[codigo] || 0) + 1;
+    return acc;
+}, {});
+const detalleAusencias = Object.keys(conteoCodigos).sort().map(codigo => `${conteoCodigos[codigo]} ${codigo}`).join(' + ');
+const ausenciasText = `${totalAusencias < 10 ? '0' + totalAusencias : totalAusencias}${detalleAusencias ? ` (${detalleAusencias})` : ''}`;
 
 let txt = '* Gestores: \n';
 txt += `- Planificados: ${totalPlanificados}\n`;
 txt += `- Reales: ${totalReales}\n`;
-txt += `- Ausencias: ${totalAusencias < 10 ? '0' + totalAusencias : totalAusencias}\n`;
+txt += `- Ausencias: ${ausenciasText}\n`;
 txt += `- En formación: 0\n`;
 txt += `- Línea GTS: ${g_wp.gts_real}\n`;
 txt += `- Línea ayuda psicológica: 0\n\n`;
@@ -1060,69 +1636,482 @@ document.getElementById('modalWP').style.display = 'flex';
 function copiarTexto(id) {
 navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
 mostrarToast("✅ ¡Copiado al portapapeles!");
-cerrarModal('modalWP');
+document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none');
 });
 }
+
+function abrirDiarioOperativo() {
+    renderDiarioOperativo();
+    document.getElementById('modalDiarioOperativo').style.display = 'flex';
+}
+
+function cerrarDiarioOperativo() {
+    document.getElementById('modalDiarioOperativo').style.display = 'none';
+}
+
+function renderDiarioOperativo() {
+    const body = document.getElementById('diario-operativo-body');
+    if (!g_diarioOperativo) {
+        body.innerHTML = '<p style="color:var(--text-muted); margin:0;">No existe un Diario Operativo. Ejecute primero CRUZAR DATOS.</p>';
+        return;
+    }
+
+    const resumen = g_diarioOperativo.resumen || {};
+    const totalFilas = Array.isArray(g_diarioOperativo.filas) ? g_diarioOperativo.filas.length : 0;
+
+    body.innerHTML = `
+        <div style="display:grid; gap:12px;">
+            <div><b>Fecha</b><div style="margin-top:6px;">${g_diarioOperativo.fecha || '-'}</div></div>
+            <div><b>Hora</b><div style="margin-top:6px;">${g_diarioOperativo.hora_cruce || '-'}</div></div>
+            <div><b>Total de filas</b><div style="margin-top:6px;">${totalFilas}</div></div>
+            <div style="margin-top:12px;"><b>Resumen</b></div>
+            <div style="display:grid; gap:8px; padding-left:8px;">
+                <div>Total: ${resumen.total ?? '-'}</div>
+                <div>Presente: ${resumen.presente ?? '-'}</div>
+                <div>Supervisores: ${resumen.supervisores ?? '-'}</div>
+                <div>GTS: ${resumen.gts ?? '-'}</div>
+                <div>Ausencias: ${resumen.ausencias ?? '-'}</div>
+                <div>Exceso: ${resumen.exceso ?? '-'}</div>
+                <div>Inactivos: ${resumen.inactivos ?? '-'}</div>
+            </div>
+        </div>
+    `;
+}
+
+// INCIDENCIAS v6 - INICIO
+let g_incidencias = [];
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function inicializarIncidencias() {
+    const guardado = localStorage.getItem('wfm_incidencias_v6');
+    if (guardado) {
+        try { g_incidencias = JSON.parse(guardado); } 
+        catch(e) { g_incidencias = []; }
+    }
+}
+
+function guardarIncidenciasLocales() {
+    localStorage.setItem('wfm_incidencias_v6', JSON.stringify(g_incidencias));
+}
+
+function cargarTiposAusencia() {
+    const saved = localStorage.getItem('wfm_tipos_ausencia');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.every(item => item && typeof item.tipo === 'string' && typeof item.codigo === 'string')) {
+                g_tiposAusencia = parsed;
+            } else {
+                throw new Error('Formato inválido');
+            }
+        } catch (e) {
+            g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
+            guardarTiposAusencia();
+        }
+    } else {
+        g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
+        guardarTiposAusencia();
+    }
+}
+
+function guardarTiposAusencia() {
+    localStorage.setItem('wfm_tipos_ausencia', JSON.stringify(g_tiposAusencia));
+}
+
+function obtenerCodigoAusencia(tipo) {
+    const found = g_tiposAusencia.find(item => item.tipo === tipo);
+    return found ? found.codigo : tipo;
+}
+
+function restaurarTiposAusenciaDefault() {
+    g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
+    guardarTiposAusencia();
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
+    mostrarToast('✅ Tipos de ausencia restaurados a valores por defecto');
+}
+
+function renderTipoAusenciaSelect(selectedTipo) {
+    const select = document.getElementById('inc-tipo');
+    if (!select) return;
+    select.innerHTML = '';
+    g_tiposAusencia.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.tipo;
+        opt.innerText = item.tipo;
+        select.appendChild(opt);
+    });
+    if (selectedTipo && !g_tiposAusencia.some(item => item.tipo === selectedTipo)) {
+        const opt = document.createElement('option');
+        opt.value = selectedTipo;
+        opt.innerText = `${selectedTipo} (sin configurar)`;
+        select.appendChild(opt);
+    }
+    select.value = selectedTipo || (g_tiposAusencia[0] && g_tiposAusencia[0].tipo) || '';
+}
+
+function renderTiposAusenciaUI() {
+    const container = document.getElementById('tipos-ausencia-list');
+    if (!container) return;
+    container.innerHTML = '';
+    g_tiposAusencia.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.padding = '6px 0';
+        row.style.borderBottom = '1px solid var(--border)';
+        row.innerHTML = `
+            <div style="display:flex; gap:12px; align-items:center;">
+                <span style="font-size:13px;"><b>${escapeHTML(item.tipo)}</b></span>
+                <span style="font-size:12px; color:var(--text-muted);">${escapeHTML(item.codigo)}</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button class="btn-clear" type="button" onclick="editarTipoAusencia(${index})">Editar</button>
+                <button class="btn-clear" type="button" onclick="eliminarTipoAusencia(${index})">Eliminar</button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function agregarTipoAusencia() {
+    const nombreEl = document.getElementById('tipo-nuevo-nombre');
+    const codigoEl = document.getElementById('tipo-nuevo-codigo');
+    const errorEl = document.getElementById('tipo-ausencia-error');
+    if (!nombreEl || !codigoEl || !errorEl) return;
+    const tipo = nombreEl.value.trim();
+    const codigo = codigoEl.value.trim();
+    errorEl.innerText = '';
+    if (!tipo || !codigo) {
+        errorEl.innerText = 'Tipo y código son obligatorios.';
+        return;
+    }
+    const duplicate = g_tiposAusencia.find((item, idx) => item.tipo === tipo && idx !== g_tipoAusenciaEditIndex);
+    if (duplicate) {
+        errorEl.innerText = 'Ya existe un tipo con ese nombre.';
+        return;
+    }
+    if (g_tipoAusenciaEditIndex !== null) {
+        g_tiposAusencia[g_tipoAusenciaEditIndex] = { tipo, codigo };
+        g_tipoAusenciaEditIndex = null;
+        document.getElementById('tipo-nuevo-boton').innerText = 'Añadir tipo';
+    } else {
+        g_tiposAusencia.push({ tipo, codigo });
+    }
+    guardarTiposAusencia();
+    renderTipoAusenciaSelect(tipo);
+    renderTiposAusenciaUI();
+    nombreEl.value = '';
+    codigoEl.value = '';
+}
+
+function editarTipoAusencia(index) {
+    const tipo = g_tiposAusencia[index];
+    if (!tipo) return;
+    g_tipoAusenciaEditIndex = index;
+    document.getElementById('tipo-nuevo-nombre').value = tipo.tipo;
+    document.getElementById('tipo-nuevo-codigo').value = tipo.codigo;
+    document.getElementById('tipo-nuevo-boton').innerText = 'Guardar cambios';
+    document.getElementById('tipo-ausencia-error').innerText = '';
+}
+
+function eliminarTipoAusencia(index) {
+    const tipo = g_tiposAusencia[index];
+    if (!tipo) return;
+    if (g_incidencias.some(inc => inc.tipo === tipo.tipo)) {
+        mostrarToast('No se puede eliminar: este tipo está en uso.');
+        return;
+    }
+    g_tiposAusencia.splice(index, 1);
+    guardarTiposAusencia();
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
+}
+
+function cancelarEdicionTipo() {
+    g_tipoAusenciaEditIndex = null;
+    document.getElementById('tipo-nuevo-nombre').value = '';
+    document.getElementById('tipo-nuevo-codigo').value = '';
+    document.getElementById('tipo-nuevo-boton').innerText = 'Añadir tipo';
+    const errorEl = document.getElementById('tipo-ausencia-error');
+    if (errorEl) errorEl.innerText = '';
+}
+
+function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
+    if (!pin || !fechaConsulta || !horaConsulta) return null;
+    const incidencia = g_incidencias.find(inc => {
+        if (inc.pin !== pin) return false;
+        if (inc.fecha !== fechaConsulta) return false;
+        if (!inc.hora_inicio && !inc.hora_fin) return true;
+        if (inc.hora_inicio && inc.hora_fin) {
+            return horaConsulta >= inc.hora_inicio && horaConsulta < inc.hora_fin;
+        }
+        return false;
+    });
+    return incidencia || null;
+}
+
+function formatearIncidenciaParaEstado(inc) {
+    if (!inc) return '';
+    const horario = inc.hora_inicio && inc.hora_fin ? `${inc.hora_inicio}-${inc.hora_fin}` : 'Día completo';
+    return `AUSENCIA JUSTIFICADA - ${inc.tipo} ${horario}`;
+}
+
+function abrirModalIncidencias() {
+    limpiarFormularioIncidencia();
+    const txtCuadrante = document.getElementById('raw-cuadrante').value.trim();
+    construirRosterDesdeCuadrante(txtCuadrante);
+    renderSugerenciasAgenda([]);
+    document.getElementById('inc-roster-info').innerText = txtCuadrante
+        ? 'Selecciona un empleado del cuadrante o escribe manualmente.'
+        : 'Sin cuadrante cargado. Puedes completar manualmente.';
+    document.getElementById('inc-fecha').value = new Date().toISOString().split('T')[0];
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
+    renderIncidencias();
+    document.getElementById('modalIncidencias').style.display = 'flex';
+}
+
+function limpiarFormularioIncidencia() {
+    document.getElementById('inc-id').value = "";
+    document.getElementById('inc-pin').value = "";
+    document.getElementById('inc-empleado').value = "";
+    document.getElementById('inc-buscar-empleado').value = "";
+    document.getElementById('inc-turno-detectado').value = "";
+    document.getElementById('inc-sugerencias').innerHTML = "";
+    document.getElementById('inc-roster-info').innerText = "";
+    document.getElementById('inc-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('inc-tipo').selectedIndex = 0;
+    document.getElementById('inc-inicio').value = "";
+    document.getElementById('inc-fin').value = "";
+    document.getElementById('inc-supervisor').value = "";
+    document.getElementById('inc-obs').value = "";
+}
+
+function guardarIncidencia() {
+    const idInput = document.getElementById('inc-id').value;
+    const pin = document.getElementById('inc-pin').value.trim();
+    const empleado = document.getElementById('inc-empleado').value.trim();
+    const turnoDetectado = document.getElementById('inc-turno-detectado').value.trim();
+    const fecha = document.getElementById('inc-fecha').value;
+    const tipo = document.getElementById('inc-tipo').value;
+    const inicio = document.getElementById('inc-inicio').value;
+    const fin = document.getElementById('inc-fin').value;
+    const supervisor = document.getElementById('inc-supervisor').value.trim();
+    const obs = document.getElementById('inc-obs').value.trim();
+
+    if (!pin || !empleado || !fecha) {
+        mostrarToast("⚠️ PIN, Empleado y Fecha son obligatorios"); return;
+    }
+
+    // Validación estricta de franja horaria
+    if ((inicio && !fin) || (!inicio && fin)) {
+        mostrarToast("⚠️ Indica ambas horas (inicio y fin) o déjalas en blanco para día completo."); return;
+    }
+    if (inicio && fin && inicio >= fin) {
+        mostrarToast("⚠️ La hora de fin debe ser mayor a la hora de inicio."); return;
+    }
+
+    const incidencia = {
+        id: idInput ? idInput : Date.now().toString(),
+        pin: pin,
+        empleado: empleado,
+        fecha: fecha,
+        hora_inicio: inicio || null,
+        hora_fin: fin || null,
+        turno_detectado: turnoDetectado || null,
+        tipo: tipo,
+        supervisor_registra: supervisor,
+        observaciones: obs,
+        fecha_creacion: idInput ? g_incidencias.find(i => i.id === idInput)?.fecha_creacion : new Date().toISOString()
+    };
+
+    if (idInput) {
+        const index = g_incidencias.findIndex(i => i.id === idInput);
+        if (index > -1) g_incidencias[index] = incidencia;
+    } else {
+        g_incidencias.push(incidencia);
+    }
+
+    guardarIncidenciasLocales();
+    limpiarFormularioIncidencia();
+    renderIncidencias();
+    mostrarToast("✅ Incidencia guardada correctamente");
+}
+
+function eliminarIncidencia(id) {
+    if(confirm("¿Estás seguro de eliminar permanentemente esta incidencia?")) {
+        g_incidencias = g_incidencias.filter(i => i.id !== id);
+        guardarIncidenciasLocales();
+        renderIncidencias();
+        mostrarToast("🗑️ Incidencia eliminada");
+    }
+}
+
+function editarIncidencia(id) {
+    const inc = g_incidencias.find(i => i.id === id);
+    if (!inc) return;
+
+    renderTipoAusenciaSelect(inc.tipo);
+    document.getElementById('inc-id').value = inc.id;
+    document.getElementById('inc-pin').value = inc.pin;
+    document.getElementById('inc-empleado').value = inc.empleado;
+    document.getElementById('inc-buscar-empleado').value = `${inc.pin} ${inc.empleado}`;
+    document.getElementById('inc-fecha').value = inc.fecha;
+    document.getElementById('inc-tipo').value = inc.tipo;
+    document.getElementById('inc-inicio').value = inc.hora_inicio || "";
+    document.getElementById('inc-fin').value = inc.hora_fin || "";
+    document.getElementById('inc-supervisor').value = inc.supervisor_registra || "";
+    document.getElementById('inc-turno-detectado').value = inc.turno_detectado || "";
+    document.getElementById('inc-obs').value = inc.observaciones;
+
+    const scrollTarget = document.querySelector('#modalIncidencias .grid-2');
+    if (scrollTarget) {
+        scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollTarget.classList.add('edit-highlight');
+        setTimeout(() => scrollTarget.classList.remove('edit-highlight'), 1000);
+    }
+
+    const focusField = document.getElementById('inc-buscar-empleado') || document.getElementById('inc-pin');
+    if (focusField) focusField.focus();
+}
+
+function obtenerEstadoIncidencia(inc, fechaActual, horaActual) {
+    if (!inc || !inc.fecha) return 'PASADA';
+    const fechaInc = inc.fecha;
+    if (fechaInc > fechaActual) return 'FUTURA';
+    if (fechaInc < fechaActual) return 'PASADA';
+
+    const inicio = inc.hora_inicio;
+    const fin = inc.hora_fin;
+    if (!inicio && !fin) return 'ACTIVA_AHORA';
+    if (inicio && fin) {
+        if (horaActual >= inicio && horaActual < fin) return 'ACTIVA_AHORA';
+        if (horaActual < inicio) return 'PROXIMA_HOY';
+        return 'FINALIZADA_HOY';
+    }
+    if (inicio && !fin) return horaActual < inicio ? 'PROXIMA_HOY' : 'ACTIVA_AHORA';
+    if (!inicio && fin) return horaActual < fin ? 'ACTIVA_AHORA' : 'FINALIZADA_HOY';
+    return 'ACTIVA_AHORA';
+}
+
+function clasificarIncidenciasAgenda(fechaActual, horaActual) {
+    const grupos = {
+        activasAhora: [],
+        proximasHoy: [],
+        finalizadasHoy: [],
+        futuras: [],
+        pasadas: []
+    };
+
+    g_incidencias.forEach(inc => {
+        const estado = obtenerEstadoIncidencia(inc, fechaActual, horaActual);
+        const codigo = obtenerCodigoAusencia(inc.tipo);
+        const horario = (inc.hora_inicio && inc.hora_fin) ? `${inc.hora_inicio} - ${inc.hora_fin}` : 'Día completo';
+        const item = { ...inc, codigo, horario, estado };
+
+        if (estado === 'ACTIVA_AHORA') grupos.activasAhora.push(item);
+        else if (estado === 'PROXIMA_HOY') grupos.proximasHoy.push(item);
+        else if (estado === 'FINALIZADA_HOY') grupos.finalizadasHoy.push(item);
+        else if (estado === 'FUTURA') grupos.futuras.push(item);
+        else grupos.pasadas.push(item);
+    });
+
+    return grupos;
+}
+
+function renderIncidencias() {
+    const wrapper = document.getElementById('agenda-incidencias');
+    if (!wrapper) return;
+
+    const fechaActual = new Date().toISOString().slice(0, 10);
+    const horaActual = new Date().toTimeString().slice(0, 5);
+    const agenda = clasificarIncidenciasAgenda(fechaActual, horaActual);
+
+    const secciones = [
+        { key: 'activasAhora', title: 'Activas ahora', headerClass: 'agenda-seccion__header--success', cardClass: 'incidencia-card--activa' },
+        { key: 'proximasHoy', title: 'Próximas hoy', headerClass: 'agenda-seccion__header--warning', cardClass: 'incidencia-card--proxima' },
+        { key: 'finalizadasHoy', title: 'Finalizadas hoy', headerClass: 'agenda-seccion__header--muted', cardClass: 'incidencia-card--finalizada' },
+        { key: 'futuras', title: 'Futuras', headerClass: 'agenda-seccion__header--info', cardClass: 'incidencia-card--futura' },
+        { key: 'pasadas', title: 'Pasadas', headerClass: 'agenda-seccion__header--dark', cardClass: 'incidencia-card--pasada' }
+    ];
+
+    wrapper.innerHTML = secciones.map(seccion => {
+        const items = agenda[seccion.key] || [];
+        const cards = items.length
+            ? items.map(item => renderIncidenciaCard(item, seccion.cardClass)).join('')
+            : '<div class="agenda-empty">Sin registros</div>';
+
+        return `
+            <div class="agenda-seccion">
+                <div class="agenda-seccion__header ${seccion.headerClass}">
+                    <span>${seccion.title}</span>
+                    <span>${items.length}</span>
+                </div>
+                <div class="agenda-seccion__body">${cards}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderIncidenciaCard(inc, cardClass) {
+    const sPin = escapeHTML(inc.pin || '');
+    const sEmp = escapeHTML(inc.empleado || '');
+    const sTip = escapeHTML(inc.tipo || '');
+    const sCod = escapeHTML(inc.codigo || '');
+    const sFec = escapeHTML(inc.fecha || '');
+    const sHor = escapeHTML(inc.horario || '');
+    const sTurno = escapeHTML(inc.turno_detectado || '');
+    const sObs = escapeHTML(inc.observaciones || '');
+    const sSup = escapeHTML(inc.supervisor_registra || '');
+
+    return `
+        <div class="incidencia-card ${cardClass}">
+            <div class="incidencia-card__top">
+                <div class="incidencia-card__title">${sEmp} <span class="incidencia-card__pin">${sPin}</span></div>
+                <div class="incidencia-card__tag">${sTip} ${sCod ? `(${sCod})` : ''}</div>
+            </div>
+            <div class="incidencia-card__line"><b>Fecha</b><span>${sFec}</span></div>
+            <div class="incidencia-card__line"><b>Horario</b><span>${sHor}</span></div>
+            ${sTurno ? `<div class="incidencia-card__line"><b>Turno</b><span>${sTurno}</span></div>` : ''}
+            ${sObs ? `<div class="incidencia-card__line"><b>Obs</b><span class="incidencia-card__text">${sObs}</span></div>` : ''}
+            ${sSup ? `<div class="incidencia-card__line"><b>Supervisor</b><span>${sSup}</span></div>` : ''}
+            <div class="incidencia-card__footer">
+                <div></div>
+                <div class="incidencia-card__actions">
+                    <button onclick="editarIncidencia('${inc.id}')" title="Editar">✏️</button>
+                    <button onclick="eliminarIncidencia('${inc.id}')" title="Eliminar">🗑️</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+// INCIDENCIAS v6 - FIN
 
 // ============================================================
 // INIT
 // ============================================================
-function addEventListeners() {
-    // Cabecera
-    document.getElementById('hora-consulta').addEventListener('change', marcarManual);
-    document.getElementById('btn-reloj').addEventListener('click', iniciarReloj);
-    document.getElementById('alarm-btn').addEventListener('click', toggleAlarma);
-    document.getElementById('btn-open-sup').addEventListener('click', abrirModalSup);
-    document.getElementById('btn-darkmode').addEventListener('click', toggleDarkMode);
-    document.getElementById('btn-ayuda').addEventListener('click', () => document.getElementById('modalAyuda').style.display = 'flex');
-
-    // Inputs
-    document.querySelectorAll('[data-clear-id]').forEach(btn => {
-        btn.addEventListener('click', (e) => limpiarCaja(e.currentTarget.dataset.clearId));
-    });
-    document.getElementById('raw-cuadrante').addEventListener('input', guardarLocal);
-    document.getElementById('raw-avaya').addEventListener('input', guardarLocal);
-
-    // Botones principales
-    document.getElementById('btn-process').addEventListener('click', animarYCruzar);
-    document.getElementById('btn-ocup').addEventListener('click', mostrarOcupacion);
-    document.getElementById('btn-whatsapp').addEventListener('click', abrirWhatsApp);
-    document.getElementById('btn-export').addEventListener('click', exportarCSV);
-
-    // Stats y tabla
-    document.querySelectorAll('.stat-box').forEach(box => {
-        box.addEventListener('click', (e) => filtrar(e.currentTarget.dataset.filter));
-    });
-    document.getElementById('buscador').addEventListener('input', buscarTabla);
-    document.querySelectorAll('#tabla-res thead th').forEach(th => {
-        th.addEventListener('click', (e) => sortTable(parseInt(e.currentTarget.dataset.colIndex)));
-    });
-
-    // Modales
-    document.querySelectorAll('[data-close-modal]').forEach(btn => {
-        btn.addEventListener('click', (e) => cerrarModal(e.currentTarget.dataset.closeModal));
-    });
-    document.getElementById('btn-alarma-ok').addEventListener('click', apagarAlarmaVisual);
-    document.getElementById('btn-wp-copy').addEventListener('click', () => copiarTexto('wp-text'));
-    document.getElementById('btn-ocup-copy').addEventListener('click', copiarOcupacion);
-    document.getElementById('btn-sup-add').addEventListener('click', agregarSupervisor);
-    document.getElementById('sup-new-pin').addEventListener('input', (e) => e.target.value = e.target.value.replace(/\D/g, ''));
-    document.getElementById('sup-tags').addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON' && e.target.dataset.pin) {
-            eliminarSupervisor(e.target.dataset.pin);
-        }
-    });
-}
-
-window.addEventListener('load', () => {
-addEventListeners();
+window.onload = function() {
+cargarTiposAusencia();
+cargarPersonalMaestro();
+inicializarIncidencias(); // INCIDENCIAS v6
 iniciarReloj();
 const theme = localStorage.getItem('wfm_theme') || 'light';
 document.documentElement.setAttribute('data-theme', theme);
-document.getElementById('btn-darkmode').innerText = theme === 'dark' ? '🌙 Oscuro' : '☀️ Claro';
+document.getElementById('btn-darkmode').innerText = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
 if (localStorage.getItem("wfm_cuadrante")) document.getElementById("raw-cuadrante").value = localStorage.getItem("wfm_cuadrante");
 if (localStorage.getItem("wfm_avaya")) document.getElementById("raw-avaya").value = localStorage.getItem("wfm_avaya");
-});
+};
 </script>
 </body>
-</html>
+</html> 
