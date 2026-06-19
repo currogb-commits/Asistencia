@@ -609,6 +609,7 @@ let sortDir = {}; // columna -> asc/desc
 let g_historial = []; // últimos 3 cruces
 let g_rosterByPin = new Map();
 let g_rosterList = [];
+let g_personalMaestro = [];
 let g_diarioOperativo = null;
 
 const TIPOS_AUSENCIA_DEFAULT = [
@@ -771,6 +772,88 @@ localStorage.setItem("wfm_avaya", document.getElementById("raw-avaya").value);
 }, 400);
 }
 
+function cargarPersonalMaestro() {
+    const guardado = localStorage.getItem('wfm_personal_maestro');
+    if (!guardado) {
+        g_personalMaestro = [];
+        return;
+    }
+    try {
+        const parsed = JSON.parse(guardado);
+        if (Array.isArray(parsed)) {
+            g_personalMaestro = parsed.map(persona => ({
+                pin: String(persona.pin || '').trim(),
+                nombre: String(persona.nombre || '').trim(),
+                categoria: String(persona.categoria || 'Otros').trim(),
+                activo: persona.activo !== false,
+                observaciones: String(persona.observaciones || '').trim()
+            })).filter(persona => persona.pin && persona.nombre);
+        } else {
+            g_personalMaestro = [];
+        }
+    } catch (e) {
+        g_personalMaestro = [];
+    }
+}
+
+function guardarPersonalMaestro() {
+    localStorage.setItem('wfm_personal_maestro', JSON.stringify(g_personalMaestro));
+}
+
+function buscarPersonaMaestro(query) {
+    const q = String(query || '').toLowerCase().trim();
+    if (!q) return [];
+    const resultados = [];
+    for (const persona of g_personalMaestro) {
+        const pin = String(persona.pin || '');
+        const nombre = String(persona.nombre || '').toLowerCase();
+        if (pin.includes(q) || nombre.includes(q)) {
+            resultados.push(persona);
+        }
+    }
+    return resultados.slice(0, 8);
+}
+
+function agregarPersonaMaestro(persona) {
+    const pin = String(persona.pin || '').trim();
+    const nombre = String(persona.nombre || '').trim();
+    if (!pin || !nombre) return false;
+    if (g_personalMaestro.some(p => p.pin === pin)) return false;
+    g_personalMaestro.push({
+        pin,
+        nombre,
+        categoria: String(persona.categoria || 'Otros').trim(),
+        activo: persona.activo !== false,
+        observaciones: String(persona.observaciones || '').trim()
+    });
+    guardarPersonalMaestro();
+    return true;
+}
+
+function editarPersonaMaestro(pin, datos) {
+    const idx = g_personalMaestro.findIndex(p => p.pin === String(pin || '').trim());
+    if (idx === -1) return false;
+    const persona = g_personalMaestro[idx];
+    if (datos.nombre !== undefined) persona.nombre = String(datos.nombre || '').trim();
+    if (datos.categoria !== undefined) persona.categoria = String(datos.categoria || 'Otros').trim();
+    if (datos.activo !== undefined) persona.activo = datos.activo === true;
+    if (datos.observaciones !== undefined) persona.observaciones = String(datos.observaciones || '').trim();
+    g_personalMaestro[idx] = persona;
+    guardarPersonalMaestro();
+    return true;
+}
+
+function eliminarPersonaMaestro(pin) {
+    const clave = String(pin || '').trim();
+    const longitudAnterior = g_personalMaestro.length;
+    g_personalMaestro = g_personalMaestro.filter(p => p.pin !== clave);
+    if (g_personalMaestro.length !== longitudAnterior) {
+        guardarPersonalMaestro();
+        return true;
+    }
+    return false;
+}
+
 // AGENDA OPERATIVA v6 - INICIO
 function construirRosterDesdeCuadrante(textoCuadrante) {
     g_rosterByPin = new Map();
@@ -816,7 +899,38 @@ function construirRosterDesdeCuadrante(textoCuadrante) {
 function buscarEmpleadoAgenda(query) {
     const q = String(query || "").toLowerCase().trim();
     if (!q) return [];
-    return g_rosterList.filter(emp => emp.pin.includes(q) || emp.nombre.toLowerCase().includes(q)).slice(0, 8);
+
+    const resultados = [];
+    const vistos = new Set();
+
+    const maestroMatches = buscarPersonaMaestro(query);
+    maestroMatches.forEach(persona => {
+        const pin = String(persona.pin || '');
+        const rosterItem = g_rosterByPin.get(pin);
+        resultados.push({
+            pin,
+            nombre: persona.nombre,
+            horario: rosterItem ? rosterItem.horario || 'Turno detectado' : 'No planificado hoy',
+            fuente: rosterItem ? 'maestro-cuadrante' : 'maestro'
+        });
+        vistos.add(pin);
+    });
+
+    for (const emp of g_rosterList) {
+        if (resultados.length >= 8) break;
+        if (vistos.has(emp.pin)) continue;
+        if (emp.pin.includes(q) || emp.nombre.toLowerCase().includes(q)) {
+            resultados.push({
+                pin: emp.pin,
+                nombre: emp.nombre,
+                horario: emp.horario || 'Turno detectado',
+                fuente: 'cuadrante'
+            });
+            vistos.add(emp.pin);
+        }
+    }
+
+    return resultados.slice(0, 8);
 }
 
 function renderSugerenciasAgenda(resultados) {
@@ -1829,6 +1943,7 @@ function renderIncidenciaCard(inc, cardClass) {
 // ============================================================
 window.onload = function() {
 cargarTiposAusencia();
+cargarPersonalMaestro();
 inicializarIncidencias(); // INCIDENCIAS v6
 iniciarReloj();
 const theme = localStorage.getItem('wfm_theme') || 'light';
