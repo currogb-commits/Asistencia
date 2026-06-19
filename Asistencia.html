@@ -430,6 +430,32 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 </div>
 </div>
 
+<div id="modalPlantilla" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--primary); width: 780px; max-width: 95vw;">
+<p class="modal-title">Maestro de Plantilla Operativa</p>
+<div class="grid-2">
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">PIN</label><input type="text" id="plantilla-pin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: 8830" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nombre</label><input type="text" id="plantilla-nombre" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Nombre completo"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Categoría</label><input type="text" id="plantilla-categoria" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: Operativo"></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Observaciones</label><input type="text" id="plantilla-observaciones" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Notas internas"></div>
+<div style="grid-column: span 2; display:flex; align-items:center; gap: 10px;"><input type="checkbox" id="plantilla-activo" checked><label for="plantilla-activo" style="font-size:13px; color:var(--text);">Activo en plantilla</label></div>
+</div>
+<input type="hidden" id="plantilla-id">
+<div style="display:flex; gap:10px; margin-top:15px; margin-bottom: 18px; flex-wrap: wrap;">
+<button class="btn-modal btn-modal-primary" onclick="guardarPlantilla()">GUARDAR MIEMBRO</button>
+<button class="btn-modal btn-modal-secondary" onclick="limpiarFormularioPlantilla()">Limpiar</button>
+</div>
+<div style="margin-top:10px;">
+<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 12px;">
+<h3 style="font-size:14px; color:var(--text); margin:0;">Miembros de plantilla</h3>
+<input type="text" id="plantilla-buscar" class="search-box" placeholder="Buscar PIN, nombre, categoría..." oninput="renderPlantillaOperativa(this.value)">
+</div>
+<div id="plantilla-list" style="display:grid; gap:12px;"></div>
+</div>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalPlantilla')">Cerrar</button>
+</div>
+</div>
+
 <!-- INCIDENCIAS v6 - INICIO -->
 <div id="modalIncidencias" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--warning); width: 850px; max-width: 95vw;">
@@ -512,6 +538,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 </button>
 <!-- INCIDENCIAS v6 - INICIO -->
 <button class="btn-top" onclick="abrirModalIncidencias()"> 📝 Incidencias</button>
+<button class="btn-top" onclick="abrirModalPlantilla()"> 📋 Plantilla</button>
 <!-- INCIDENCIAS v6 - FIN -->
 <button class="btn-top" onclick="abrirModalSup()"> SUP</button>
 <button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
@@ -811,24 +838,157 @@ function buscarPersonaMaestro(query) {
             resultados.push(persona);
         }
     }
+    resultados.sort((a, b) => {
+        if (a.activo !== b.activo) return a.activo ? -1 : 1;
+        const cmp = a.nombre.localeCompare(b.nombre, 'es');
+        return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
+    });
     return resultados.slice(0, 8);
 }
 
-function agregarPersonaMaestro(persona) {
-    const pin = String(persona.pin || '').trim();
-    const nombre = String(persona.nombre || '').trim();
-    if (!pin || !nombre) return false;
-    if (g_personalMaestro.some(p => p.pin === pin)) return false;
-    g_personalMaestro.push({
-        pin,
-        nombre,
-        categoria: String(persona.categoria || 'Otros').trim(),
-        activo: persona.activo !== false,
-        observaciones: String(persona.observaciones || '').trim()
-    });
-    guardarPersonalMaestro();
-    return true;
+function abrirModalPlantilla() {
+    renderPlantillaOperativa();
+    limpiarFormularioPlantilla();
+    document.getElementById('modalPlantilla').style.display = 'flex';
 }
+
+function limpiarFormularioPlantilla() {
+    document.getElementById('plantilla-id').value = '';
+    document.getElementById('plantilla-pin').value = '';
+    document.getElementById('plantilla-nombre').value = '';
+    document.getElementById('plantilla-categoria').value = '';
+    document.getElementById('plantilla-observaciones').value = '';
+    document.getElementById('plantilla-activo').checked = true;
+}
+
+function guardarPlantilla() {
+    const originalPin = document.getElementById('plantilla-id').value.trim();
+    const pin = document.getElementById('plantilla-pin').value.trim();
+    const nombre = document.getElementById('plantilla-nombre').value.trim();
+    const categoria = document.getElementById('plantilla-categoria').value.trim() || 'Otros';
+    const observaciones = document.getElementById('plantilla-observaciones').value.trim();
+    const activo = document.getElementById('plantilla-activo').checked;
+
+    if (!pin || !nombre) {
+        mostrarToast('⚠️ PIN y nombre son obligatorios');
+        return;
+    }
+    if (pin.length < 3 || pin.length > 6) {
+        mostrarToast('⚠️ El PIN debe tener entre 3 y 6 dígitos');
+        return;
+    }
+    if (originalPin && originalPin !== pin) {
+        if (g_personalMaestro.some(p => p.pin === pin)) {
+            mostrarToast('⚠️ Ya existe otro miembro con ese PIN');
+            return;
+        }
+        if (g_incidencias.some(inc => inc.pin === originalPin)) {
+            mostrarToast('⚠️ No se puede cambiar el PIN: este miembro tiene incidencias existentes');
+            return;
+        }
+    }
+
+    if (originalPin) {
+        const idx = g_personalMaestro.findIndex(p => p.pin === originalPin);
+        if (idx === -1) {
+            mostrarToast('⚠️ No se encontró el miembro original');
+            return;
+        }
+        g_personalMaestro[idx] = {
+            pin,
+            nombre,
+            categoria,
+            activo,
+            observaciones
+        };
+        mostrarToast('✅ Miembro actualizado');
+    } else {
+        if (g_personalMaestro.some(p => p.pin === pin)) {
+            mostrarToast('⚠️ Ya existe un miembro con ese PIN');
+            return;
+        }
+        g_personalMaestro.push({ pin, nombre, categoria, activo, observaciones });
+        mostrarToast('✅ Miembro añadido');
+    }
+    guardarPersonalMaestro();
+    renderPlantillaOperativa();
+    limpiarFormularioPlantilla();
+}
+
+function renderPlantillaOperativa(query) {
+    const cont = document.getElementById('plantilla-list');
+    if (!cont) return;
+    const q = String(query || '').toLowerCase().trim();
+    const items = g_personalMaestro
+        .filter(persona => {
+            if (!q) return true;
+            return persona.pin.includes(q) || persona.nombre.toLowerCase().includes(q) || persona.categoria.toLowerCase().includes(q);
+        })
+        .sort((a, b) => {
+            if (a.activo !== b.activo) return a.activo ? -1 : 1;
+            const cmp = a.nombre.localeCompare(b.nombre, 'es');
+            return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
+        });
+
+    if (!items.length) {
+        cont.innerHTML = '<div class="agenda-empty">No hay miembros que coincidan con la búsqueda</div>';
+        return;
+    }
+
+    cont.innerHTML = items.map(persona => {
+        const estado = persona.activo ? 'Activo' : 'Inactivo';
+        const estadoClass = persona.activo ? 'bg-ok' : 'bg-gray';
+        const observ = persona.observaciones ? `<div style="font-size:12px; color:var(--text-muted);">${escapeHTML(persona.observaciones)}</div>` : '';
+        return `
+            <div class="incidencia-card ${persona.activo ? '' : 'incidencia-card--finalizada'}" style="padding:12px;">
+                <div class="incidencia-card__top">
+                    <div class="incidencia-card__title">${escapeHTML(persona.nombre)} <span class="incidencia-card__pin">${escapeHTML(persona.pin)}</span></div>
+                    <div class="incidencia-card__tag ${estadoClass}">${estado}</div>
+                </div>
+                <div class="incidencia-card__line"><b>Categoría</b><span>${escapeHTML(persona.categoria)}</span></div>
+                ${observ}
+                <div class="incidencia-card__footer">
+                    <div></div>
+                    <div class="incidencia-card__actions">
+                        <button onclick="editarPlantilla('${persona.pin}')" title="Editar">✏️</button>
+                        <button onclick="eliminarPlantilla('${persona.pin}')" title="Eliminar">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function editarPlantilla(pin) {
+    const persona = g_personalMaestro.find(p => p.pin === String(pin).trim());
+    if (!persona) return;
+    document.getElementById('plantilla-id').value = persona.pin;
+    document.getElementById('plantilla-pin').value = persona.pin;
+    document.getElementById('plantilla-nombre').value = persona.nombre;
+    document.getElementById('plantilla-categoria').value = persona.categoria;
+    document.getElementById('plantilla-observaciones').value = persona.observaciones;
+    document.getElementById('plantilla-activo').checked = persona.activo;
+    const scrollTarget = document.querySelector('#modalPlantilla .grid-2');
+    if (scrollTarget) {
+        scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function eliminarPlantilla(pin) {
+    const persona = g_personalMaestro.find(p => p.pin === String(pin).trim());
+    if (!persona) return;
+    const tieneIncidencias = g_incidencias.some(inc => inc.pin === persona.pin);
+    if (tieneIncidencias) {
+        mostrarToast('⚠️ No se puede eliminar: existen incidencias para este PIN. Desactívalo en su lugar.');
+        return;
+    }
+    if (!confirm('¿Eliminar este miembro de la plantilla de forma permanente?')) return;
+    g_personalMaestro = g_personalMaestro.filter(p => p.pin !== persona.pin);
+    guardarPersonalMaestro();
+    renderPlantillaOperativa(document.getElementById('plantilla-buscar')?.value || '');
+    mostrarToast('🗑️ Miembro eliminado');
+}
+
 
 function editarPersonaMaestro(pin, datos) {
     const idx = g_personalMaestro.findIndex(p => p.pin === String(pin || '').trim());
