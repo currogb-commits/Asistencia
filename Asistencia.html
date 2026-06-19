@@ -128,6 +128,7 @@ justify-content: center; gap: 8px;
 .btn-main:active { transform: translateY(3px); filter: brightness(0.9); }
 .btn-process { background: linear-gradient(135deg, #27ae60, #1e8449); box-shadow: 0 4px 0 #155d2e; }
 .btn-process:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+#btn-diario { background: linear-gradient(135deg, #8e44ad, #a569bd); box-shadow: 0 4px 0 #6c3483; }
 .btn-wp { background: linear-gradient(135deg, #25D366, #1da851); box-shadow: 0 4px 0 #128c3a; display: none; }
 .btn-ocup { background: linear-gradient(135deg, #2c3e50, #1a252f); box-shadow: 0 4px 0 #0d1318; display: none; }
 .btn-export { background: linear-gradient(135deg, #16a085, #0e6655); box-shadow: 0 4px 0 #0a4a3d; display: none; }
@@ -1298,11 +1299,21 @@ const totalReales = g_wp.g_real + g_wp.gts_real;
 
 // Ausencias = Sólo las ausencias de gestores normales (GTS NUNCA son ausencias)
 const totalAusencias = g_wp.g_aus;
+const ausenciasActivas = Array.isArray(g_diarioOperativo?.filas)
+    ? g_diarioOperativo.filas.filter(f => f.tipo === 'AUSENCIA' && f.logado === false)
+    : [];
+const conteoCodigos = ausenciasActivas.reduce((acc, fila) => {
+    const codigo = fila.incidencia ? obtenerCodigoAusencia(fila.incidencia.tipo) : 'AI';
+    acc[codigo] = (acc[codigo] || 0) + 1;
+    return acc;
+}, {});
+const detalleAusencias = Object.keys(conteoCodigos).sort().map(codigo => `${conteoCodigos[codigo]} ${codigo}`).join(' + ');
+const ausenciasText = `${totalAusencias < 10 ? '0' + totalAusencias : totalAusencias}${detalleAusencias ? ` (${detalleAusencias})` : ''}`;
 
 let txt = '* Gestores: \n';
 txt += `- Planificados: ${totalPlanificados}\n`;
 txt += `- Reales: ${totalReales}\n`;
-txt += `- Ausencias: ${totalAusencias < 10 ? '0' + totalAusencias : totalAusencias}\n`;
+txt += `- Ausencias: ${ausenciasText}\n`;
 txt += `- En formación: 0\n`;
 txt += `- Línea GTS: ${g_wp.gts_real}\n`;
 txt += `- Línea ayuda psicológica: 0\n\n`;
