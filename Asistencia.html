@@ -625,11 +625,18 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 const SUP_DEFAULT = ["8809","8802","8806","8804","8818","8805","8817","8822","8814","8819","8816","8815","8826","8811","8813","8807","8808","8810"];
 
 function cargarSupervisores() {
-const saved = localStorage.getItem("wfm_supervisores");
-return saved ? JSON.parse(saved) : [...SUP_DEFAULT];
+    const saved = localStorage.getItem("wfm_supervisores");
+    if (!saved) return [...SUP_DEFAULT];
+    try {
+        return JSON.parse(saved);
+    } catch (err) {
+        console.warn("wfm_supervisores corrupto, restaurando valores por defecto", err);
+        localStorage.removeItem("wfm_supervisores");
+        return [...SUP_DEFAULT];
+    }
 }
 function guardarSupervisores(arr) {
-localStorage.setItem("wfm_supervisores", JSON.stringify(arr));
+    localStorage.setItem("wfm_supervisores", JSON.stringify(arr));
 }
 let PIN_SUPERVISORES = cargarSupervisores();
 
@@ -810,15 +817,32 @@ localStorage.setItem("wfm_avaya", document.getElementById("raw-avaya").value);
 }, 400);
 }
 
-function abrirModalControlDiario() {
-    generarControlDiario();
-    document.getElementById('control-diario-text').value = JSON.stringify(g_controlDiario, null, 2);
-    document.getElementById('modalControlDiario').style.display = 'flex';
+function horaAMinutos(hora) {
+    const [h, m] = String(hora).split(':').map(Number);
+    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : 0;
+}
+
+function normalizarHoraCruce(hora) {
+    const [h, m] = String(hora).split(':').map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return String(hora).padStart(5, '0');
+    const minutos = m < 30 ? 0 : 30;
+    return `${String(h).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+}
+
+function incidenciaActivaEnFranja(inc, franja, fecha) {
+    if (!inc || inc.fecha !== fecha) return false;
+    if (!inc.hora_inicio || !inc.hora_fin) return true;
+    const slotInicio = horaAMinutos(franja);
+    const slotFin = slotInicio + 30;
+    const minInicio = horaAMinutos(inc.hora_inicio);
+    const minFin = horaAMinutos(inc.hora_fin);
+    return minFin > slotInicio && minInicio < slotFin;
 }
 
 function generarControlDiario() {
     const fecha = g_diarioOperativo?.fecha || new Date().toISOString().slice(0, 10);
-    const hora_cruce = g_diarioOperativo?.hora_cruce || document.getElementById('hora-consulta').value;
+    let hora_cruce = g_diarioOperativo?.hora_cruce || document.getElementById('hora-consulta').value;
+    hora_cruce = normalizarHoraCruce(hora_cruce);
     const slots = Object.keys(g_ocupacion).sort();
     const horaActual = hora_cruce;
 
@@ -847,7 +871,7 @@ function generarControlDiario() {
         : null;
 
     const incidenciasTurno = Array.isArray(g_incidencias)
-        ? g_incidencias.filter(inc => inc.fecha === fecha)
+        ? g_incidencias.filter(inc => incidenciaActivaEnFranja(inc, horaActual, fecha))
         : [];
 
     const columnas = slots.map(hora => {
@@ -1759,6 +1783,15 @@ navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
 mostrarToast("✅ ¡Copiado al portapapeles!");
 document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none');
 });
+}
+
+function abrirModalControlDiario() {
+    generarControlDiario();
+    const textarea = document.getElementById('control-diario-text');
+    if (textarea) {
+        textarea.value = JSON.stringify(g_controlDiario || {}, null, 2);
+    }
+    document.getElementById('modalControlDiario').style.display = 'flex';
 }
 
 function abrirDiarioOperativo() {
