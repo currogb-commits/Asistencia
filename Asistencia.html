@@ -423,6 +423,7 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Previsualización de g_controlDiario generado desde el estado actual.</p>
 <textarea id="control-diario-text" class="modal-txt" readonly></textarea>
 <button class="btn-modal btn-modal-primary" onclick="copiarTexto('control-diario-text')">COPIAR JSON</button>
+<button class="btn-modal btn-modal-primary" onclick="copiarTablaExcelControlDiario()">Copiar tabla Excel</button>
 <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalControlDiario')">Cerrar</button>
 </div>
 </div>
@@ -1792,6 +1793,68 @@ function abrirModalControlDiario() {
         textarea.value = JSON.stringify(g_controlDiario || {}, null, 2);
     }
     document.getElementById('modalControlDiario').style.display = 'flex';
+}
+
+function prepararFilasControlDiarioParaExcel() {
+    const filas = [
+        [
+            'Hora',
+            'Planif. Operación',
+            'Real Operación',
+            'Ausencias Operación',
+            'Detalle Ausencias Operación',
+            'Planificado Estructura',
+            'Real Estructura',
+            'Ausencias Supervisión',
+            'Detalle Ausencias Supervisión',
+            'Total Ausencias',
+            'Incidencias en turno'
+        ]
+    ];
+
+    const columnas = Array.isArray(g_controlDiario?.columnas) ? g_controlDiario.columnas : [];
+
+    const normalizarValor = value => value == null ? '' : value;
+
+    const serializarIncidencias = incidencias => {
+        if (!Array.isArray(incidencias) || !incidencias.length) return '';
+        return incidencias.map(inc => {
+            const pin = inc.pin || '';
+            const codigo = obtenerCodigoAusencia(inc.tipo || inc.codigo || '');
+            const horario = inc.hora_inicio && inc.hora_fin
+                ? `${inc.hora_inicio}-${inc.hora_fin}`
+                : 'Día completo';
+            return `${pin} - ${codigo} - ${horario}`;
+        }).join(' | ');
+    };
+
+    columnas.forEach(col => {
+        filas.push([
+            normalizarValor(col.hora),
+            normalizarValor(col.planifOperacion),
+            normalizarValor(col.realOperacion),
+            normalizarValor(col.ausenciasOperacion),
+            normalizarValor(col.detalleAusenciasOperacion),
+            normalizarValor(col.planifEstructura),
+            normalizarValor(col.realEstructura),
+            normalizarValor(col.ausenciasSupervision),
+            normalizarValor(col.detalleAusenciasSupervision),
+            normalizarValor(col.totalAusencias),
+            serializarIncidencias(col.incidenciasEnTurno)
+        ]);
+    });
+
+    return filas;
+}
+
+function copiarTablaExcelControlDiario() {
+    const filas = prepararFilasControlDiarioParaExcel();
+    const tsv = filas.map(row => row.map(cell => String(cell).replace(/\t/g, ' ')).join('\t')).join('\n');
+    navigator.clipboard.writeText(tsv).then(() => {
+        mostrarToast('✅ Tabla Excel copiada. Pega en Excel con Ctrl+V.');
+    }).catch(() => {
+        mostrarToast('⚠️ No se pudo copiar la tabla al portapapeles.');
+    });
 }
 
 function abrirDiarioOperativo() {
