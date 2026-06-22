@@ -422,6 +422,11 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <p class="modal-title">Control Diario</p>
 <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Previsualización de g_controlDiario generado desde el estado actual.</p>
 <textarea id="control-diario-text" class="modal-txt" readonly></textarea>
+<div style="display:grid; gap:10px; margin: 12px 0;">
+    <input id="plantilla-control-diario-file" type="file" accept=".xlsx" style="display:none" onchange="leerPlantillaControlDiario(this.files[0])">
+    <button class="btn-modal btn-modal-primary" type="button" onclick="document.getElementById('plantilla-control-diario-file').click()">Analizar plantilla Excel</button>
+    <div id="control-diario-analisis" style="min-height:120px; padding:12px; border:1px solid var(--input-border); border-radius:8px; background: var(--bg); color: var(--text); font-size:12px; white-space:pre-wrap; overflow:auto;"></div>
+</div>
 <button class="btn-modal btn-modal-primary" onclick="copiarTexto('control-diario-text')">COPIAR JSON</button>
 <button class="btn-modal btn-modal-primary" onclick="copiarTablaExcelControlDiario()">Copiar tabla Excel</button>
 <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalControlDiario')">Cerrar</button>
@@ -657,6 +662,7 @@ let g_rosterList = [];
 let g_personalMaestro = [];
 let g_diarioOperativo = null;
 let g_controlDiario = null;
+let g_mapaPlantillaControlDiario = null;
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -1855,6 +1861,167 @@ function copiarTablaExcelControlDiario() {
     }).catch(() => {
         mostrarToast('⚠️ No se pudo copiar la tabla al portapapeles.');
     });
+}
+
+function leerPlantillaControlDiario(file) {
+    const resultEl = document.getElementById('control-diario-analisis');
+    if (!window.XLSX) {
+        const msg = 'Librería Excel no cargada. No se puede analizar la plantilla.';
+        mostrarToast(msg);
+        if (resultEl) resultEl.innerText = msg;
+        return;
+    }
+    if (!file) {
+        if (resultEl) resultEl.innerText = 'No se ha seleccionado ningún archivo.';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellStyles: true });
+            construirMapaPlantillaControlDiario(workbook);
+        } catch (e) {
+            console.error(e);
+            const msg = 'Error leyendo la plantilla Excel.';
+            mostrarToast(msg);
+            if (resultEl) resultEl.innerText = msg;
+        }
+    };
+    reader.onerror = function() {
+        const msg = 'Error leyendo la plantilla Excel.';
+        mostrarToast(msg);
+        if (resultEl) resultEl.innerText = msg;
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function analizarPlantillaControlDiario(workbook) {
+    const sheetNames = Array.isArray(workbook.SheetNames) ? workbook.SheetNames : [];
+    const selectedSheet = sheetNames.length ? sheetNames[0] : null;
+    const sheet = selectedSheet ? workbook.Sheets[selectedSheet] : null;
+    const sheetMap = sheet ? detectarMapaPlantillaControlDiario(sheet) : null;
+    return {
+        sheets: sheetNames,
+        selectedSheet,
+        sheetMap
+    };
+}
+
+function detectarMapaPlantillaControlDiario(sheet) {
+    const expectedHeaders = [
+        'Hora',
+        'Planif. Operación',
+        'Real Operación',
+        'Ausencias Operación',
+        'Detalle Ausencias Operación',
+        'Planificado Estructura',
+        'Real Estructura',
+        'Ausencias Supervisión',
+        'Detalle Ausencias Supervisión',
+        'Total Ausencias',
+        'Incidencias en turno'
+    ];
+
+    const ref = sheet['!ref'] || '';
+    const range = ref && window.XLSX ? XLSX.utils.decode_range(ref) : null;
+    const columns = {
+        hora: 'A',
+        planifOperacion: 'B',
+        realOperacion: 'C',
+        ausenciasOperacion: 'D',
+        detalleAusenciasOperacion: 'E',
+        planifEstructura: 'F',
+        realEstructura: 'G',
+        ausenciasSupervision: 'H',
+        detalleAusenciasSupervision: 'I',
+        totalAusencias: 'J',
+        incidenciasEnTurno: 'K'
+    };
+
+    const normalizeCell = value => value == null ? '' : String(value).trim();
+    const isHoraValida = value => /^\d{1,2}:\d{2}$/.test(String(value).trim());
+
+    let headerRow = null;
+    let primeraFilaDatos = null;
+    let ultimaFilaDatos = null;
+    const mapaFilas = {};
+
+    if (range) {
+        for (let r = range.s.r; r <= range.e.r; r++) {
+            const headerCells = expectedHeaders.map((text, idx) => {
+                const adr = XLSX.utils.encode_cell({ c: idx, r });
+                const cell = sheet[adr];
+                return normalizeCell(cell?.v) === text;
+            });
+            if (headerCells.every(Boolean)) {
+                headerRow = r + 1;
+                break;
+            }
+        }
+
+        const startRow = headerRow ? headerRow + 1 : range.s.r + 1;
+        for (let r = startRow; r <= range.e.r; r++) {
+            const cellAddr = XLSX.utils.encode_cell({ c: 0, r });
+            const cellValue = normalizeCell(sheet[cellAddr]?.v);
+            if (!cellValue) continue;
+            if (isHoraValida(cellValue)) {
+                const hora = cellValue.padStart(5, '0');
+                const fila = r + 1;
+                if (primeraFilaDatos === null) primeraFilaDatos = fila;
+                ultimaFilaDatos = fila;
+                mapaFilas[hora] = fila;
+            }
+        }
+    }
+
+    return {
+        rangoUsado: ref || null,
+        filaCabeceras: headerRow,
+        columnaHoras: 'A',
+        primeraFilaDatos,
+        ultimaFilaDatos,
+        columnas,
+        mapaFilas
+    };
+}
+
+function construirMapaPlantillaControlDiario(workbook) {
+    const resultado = analizarPlantillaControlDiario(workbook);
+    g_mapaPlantillaControlDiario = {
+        workbook,
+        ...resultado
+    };
+    const resultEl = document.getElementById('control-diario-analisis');
+    if (!resultEl) return;
+
+    if (!resultado.selectedSheet) {
+        resultEl.innerText = 'No se encontró ninguna hoja en la plantilla.';
+        return;
+    }
+
+    const lines = [];
+    lines.push(`Hojas disponibles: ${resultado.sheets.join(', ')}`);
+    lines.push(`Hoja seleccionada: ${resultado.selectedSheet}`);
+    lines.push(`Rango usado: ${resultado.sheetMap?.rangoUsado || 'No disponible'}`);
+    lines.push(`Fila de cabeceras: ${resultado.sheetMap?.filaCabeceras || 'No detectada'}`);
+    lines.push(`Columna de horas: ${resultado.sheetMap?.columnaHoras || 'A'}`);
+    lines.push(`Primera fila de datos: ${resultado.sheetMap?.primeraFilaDatos || 'No detectada'}`);
+    lines.push(`Última fila de datos: ${resultado.sheetMap?.ultimaFilaDatos || 'No detectada'}`);
+    lines.push('Columnas A-K:');
+    Object.entries(resultado.sheetMap?.columnas || {}).forEach(([key, col]) => {
+        lines.push(`  ${key}: ${col}`);
+    });
+    const mapaFilas = resultado.sheetMap?.mapaFilas || {};
+    lines.push('Mapa filas por hora:');
+    if (Object.keys(mapaFilas).length) {
+        Object.keys(mapaFilas).sort().forEach(hora => {
+            lines.push(`  ${hora} -> fila ${mapaFilas[hora]}`);
+        });
+    } else {
+        lines.push('  No se detectaron filas de hora válidas.');
+    }
+    resultEl.innerText = lines.join('\n');
 }
 
 function abrirDiarioOperativo() {
