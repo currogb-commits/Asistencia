@@ -838,6 +838,117 @@ function normalizarHoraCruce(hora) {
     return `${String(h).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
 }
 
+function generarSlotsControlDiarioPlantilla() {
+    const slots = [];
+    for (let minutos = 6 * 60; minutos <= 23 * 60 + 30; minutos += 30) {
+        const h = Math.floor(minutos / 60);
+        const m = minutos % 60;
+        slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+    return slots;
+}
+
+function buscarValorPorHora(mapa, horaNormalizada) {
+    if (!mapa || typeof mapa !== 'object') return null;
+    if (Object.prototype.hasOwnProperty.call(mapa, horaNormalizada)) return mapa[horaNormalizada];
+
+    const clave = Object.keys(mapa).find(h => normalizarHoraCruce(h) === horaNormalizada);
+    return clave ? mapa[clave] : null;
+}
+
+function redondearHoraAFranjaControlDiario(hora) {
+    const match = String(hora || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return null;
+
+    const h = Number(match[1]);
+    const m = Number(match[2]);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+
+    let minutos = h * 60 + m;
+    const resto = minutos % 30;
+
+    if (resto > 15) {
+        minutos += (30 - resto);
+    } else {
+        minutos -= resto;
+    }
+
+    const hh = Math.floor(minutos / 60) % 24;
+    const mm = minutos % 60;
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function extraerRangoTurnoDesdeHorario(horario) {
+    const match = String(horario || '').match(/(\d{1,2}:\d{2})\s*[-\^]\s*(\d{1,2}:\d{2})/);
+    if (!match) return '';
+    return `${normalizarHoraCruce(match[1])}-${normalizarHoraCruce(match[2])}`;
+}
+
+function obtenerInicioTurnoDesdeHorario(horario) {
+    const match = String(horario || '').match(/(\d{1,2}:\d{2})\s*[-\^]\s*(\d{1,2}:\d{2})/);
+    return match ? normalizarHoraCruce(match[1]) : null;
+}
+
+function formatearHoraCortaControlDiario(hora) {
+    const match = String(hora || '').trim().match(/^0?(\d{1,2}):(\d{2})$/);
+    if (!match) return String(hora || '').trim();
+    return `${Number(match[1])}:${match[2]}`;
+}
+
+function formatearDetalleAusenciaOperacionControlDiario(fila) {
+    const nombre = String(fila?.nombre || '').trim() || String(fila?.pin || '').trim() || 'Sin nombre';
+    const incidencia = fila?.incidencia || null;
+
+    if (!incidencia) {
+        const turno = extraerRangoTurnoDesdeHorario(fila?.horario || '');
+        return turno
+            ? `${nombre} - Turno: ${turno} - SIN JUSTIFICAR`
+            : `${nombre} - SIN JUSTIFICAR`;
+    }
+
+    const motivo = String(incidencia.tipo || 'JUSTIFICADA').trim();
+    const inicio = incidencia.hora_inicio ? formatearHoraCortaControlDiario(incidencia.hora_inicio) : '';
+    const fin = incidencia.hora_fin ? formatearHoraCortaControlDiario(incidencia.hora_fin) : '';
+
+    if (inicio && fin) return `${nombre} - Inicio: ${inicio} a ${fin} ${motivo}`;
+    if (inicio) return `${nombre} - Inicio: ${inicio} a ... ${motivo}`;
+    if (fin) return `${nombre} - Hasta: ${fin} ${motivo}`;
+    return `${nombre} - ${motivo}`;
+}
+
+function construirDetalleAusenciasOperacionPorFranja(fecha) {
+    const detallePorFranja = {};
+    const slotsValidos = new Set(generarSlotsControlDiarioPlantilla());
+
+    if (!Array.isArray(g_diarioOperativo?.filas)) return detallePorFranja;
+
+    g_diarioOperativo.filas
+        .filter(fila => fila && fila.tipo === 'AUSENCIA' && fila.logado === false && !fila.esSupervisor)
+        .forEach(fila => {
+            const horaInicioAusencia = fila.incidencia?.hora_inicio || obtenerInicioTurnoDesdeHorario(fila.horario);
+            const franja = redondearHoraAFranjaControlDiario(horaInicioAusencia);
+
+            if (!franja || !slotsValidos.has(franja)) return;
+
+            if (!detallePorFranja[franja]) detallePorFranja[franja] = [];
+            detallePorFranja[franja].push({
+                pin: fila.pin,
+                empleado: fila.nombre,
+                tipo: fila.incidencia?.tipo || 'SIN JUSTIFICAR',
+                codigo: fila.incidencia?.tipo ? obtenerCodigoAusencia(fila.incidencia.tipo) : 'AI',
+                hora_inicio: horaInicioAusencia || null,
+                hora_fin: fila.incidencia?.hora_fin || null,
+                turno: extraerRangoTurnoDesdeHorario(fila.horario || ''),
+                texto: formatearDetalleAusenciaOperacionControlDiario(fila),
+                incidencia: fila.incidencia || null,
+                fecha
+            });
+        });
+
+    return detallePorFranja;
+}
+
+
 function incidenciaActivaEnFranja(inc, franja, fecha) {
     if (!inc || inc.fecha !== fecha) return false;
     if (!inc.hora_inicio || !inc.hora_fin) return true;
@@ -852,20 +963,10 @@ function generarControlDiario() {
     const fecha = g_diarioOperativo?.fecha || new Date().toISOString().slice(0, 10);
     let hora_cruce = g_diarioOperativo?.hora_cruce || document.getElementById('hora-consulta').value;
     hora_cruce = normalizarHoraCruce(hora_cruce);
-    const slots = Object.keys(g_ocupacion).sort();
-    const horaActual = hora_cruce;
 
-    const ausenciasActualesOperacion = Array.isArray(g_diarioOperativo?.filas)
-        ? g_diarioOperativo.filas.filter(f => f.tipo === 'AUSENCIA' && f.logado === false && !f.esSupervisor)
-        : [];
-    const detalleAusenciasOperacion = {};
-    ausenciasActualesOperacion.forEach(fila => {
-        const codigo = obtenerCodigoAusencia(fila.incidencia?.tipo || fila.estado || 'AI');
-        detalleAusenciasOperacion[codigo] = (detalleAusenciasOperacion[codigo] || 0) + 1;
-    });
-    const detalleOperacionText = Object.keys(detalleAusenciasOperacion).length
-        ? Object.keys(detalleAusenciasOperacion).sort().map(c => `${detalleAusenciasOperacion[c]} ${c}`).join(' + ')
-        : null;
+    const slots = generarSlotsControlDiarioPlantilla();
+    const horaActual = hora_cruce;
+    const detalleAusenciasOperacionPorFranja = construirDetalleAusenciasOperacionPorFranja(fecha);
 
     const ausenciasActualesSupervision = Array.isArray(g_diarioOperativo?.filas)
         ? g_diarioOperativo.filas.filter(f => f.tipo === 'AUSENCIA' && f.logado === false && f.esSupervisor)
@@ -885,19 +986,29 @@ function generarControlDiario() {
 
     const columnas = slots.map(hora => {
         const esFranjaActual = hora === horaActual;
+        const planifOperacion = buscarValorPorHora(g_ocupacion, hora);
+        const entradas = buscarValorPorHora(g_entradas, hora);
+        const salidas = buscarValorPorHora(g_salidas, hora);
+        const detalleOperacionFranja = detalleAusenciasOperacionPorFranja[hora] || [];
+        const detalleOperacionText = detalleOperacionFranja.length
+            ? detalleOperacionFranja.map(item => item.texto).join('\n')
+            : null;
+
         return {
             hora,
-            planifOperacion: g_ocupacion[hora] ?? null,
-            entradas: g_entradas[hora] ?? null,
-            salidas: g_salidas[hora] ?? null,
+            planifOperacion: planifOperacion ?? null,
+            entradas: entradas ?? null,
+            salidas: salidas ?? null,
             realOperacion: esFranjaActual ? g_wp.g_real : null,
-            ausenciasOperacion: esFranjaActual ? g_wp.g_aus : null,
-            detalleAusenciasOperacion: esFranjaActual ? detalleOperacionText : null,
+            ausenciasOperacion: detalleOperacionFranja.length ? detalleOperacionFranja.length : null,
+            detalleAusenciasOperacion: detalleOperacionText,
             planifEstructura: null,
             realEstructura: esFranjaActual ? g_wp.s_real : null,
             ausenciasSupervision: esFranjaActual ? g_wp.s_aus : null,
             detalleAusenciasSupervision: esFranjaActual ? detalleSupervisionText : null,
-            totalAusencias: esFranjaActual ? (g_wp.g_aus + g_wp.s_aus) : null,
+            totalAusencias: (detalleOperacionFranja.length || (esFranjaActual ? g_wp.s_aus : 0))
+                ? (detalleOperacionFranja.length + (esFranjaActual ? g_wp.s_aus : 0))
+                : null,
             incidenciasEnTurno: esFranjaActual ? incidenciasTurno.map(inc => ({
                 id: inc.id,
                 pin: inc.pin,
@@ -927,7 +1038,6 @@ function generarControlDiario() {
         pendientes: [
             'Completar Real Operación por franja distinta a la franja actual',
             'Completar Planificado Estructura por franja',
-            'Completar Ausencias Operación por franja distinta a la franja actual',
             'Completar Ausencias Supervisión por franja distinta a la franja actual',
             'Validar detalle de ausencias y supervisión contra planilla oficial'
         ]
@@ -1894,7 +2004,17 @@ function prepararFilasControlDiarioParaExcel() {
 
 function copiarTablaExcelControlDiario() {
     const filas = prepararFilasControlDiarioParaExcel();
-    const tsv = filas.map(row => row.map(cell => String(cell).replace(/\t/g, ' ')).join('\t')).join('\n');
+
+    const prepararCeldaTSV = value => {
+        let text = String(value ?? '');
+        text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\t/g, ' ');
+        if (text.includes('\n') || text.includes('"')) {
+            text = `"${text.replace(/"/g, '""')}"`;
+        }
+        return text;
+    };
+
+    const tsv = filas.map(row => row.map(prepararCeldaTSV).join('\t')).join('\n');
     navigator.clipboard.writeText(tsv).then(() => {
         mostrarToast('✅ Tabla Excel copiada. Pega en Excel con Ctrl+V.');
     }).catch(() => {
