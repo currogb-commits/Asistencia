@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
@@ -624,7 +624,9 @@ z-index: 9999; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg);
 <h3> Historial de cruces recientes</h3>
 <div class="hist-grid" id="hist-grid"></div>
 </div>
-</div><script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
 // ============================================================
 // LISTA DE SUPERVISORES (editable desde UI, persistida en localStorage)
 // ============================================================
@@ -1799,6 +1801,43 @@ function abrirModalControlDiario() {
         textarea.value = JSON.stringify(g_controlDiario || {}, null, 2);
     }
     document.getElementById('modalControlDiario').style.display = 'flex';
+}
+
+function construirMapaControlDiarioPorHora() {
+    if (!g_controlDiario || !Array.isArray(g_controlDiario.columnas)) {
+        mostrarToast("⚠️ Primero genera el Control Diario.");
+        return {};
+    }
+
+    const mapa = {};
+
+    g_controlDiario.columnas.forEach(fila => {
+        if (!fila || !fila.hora) return;
+
+        mapa[fila.hora] = {
+            hora: fila.hora,
+            planifOperacion: fila.planifOperacion ?? "",
+            realOperacion: fila.realOperacion ?? "",
+            ausenciasOperacion: fila.ausenciasOperacion ?? "",
+            detalleAusenciasOperacion: fila.detalleAusenciasOperacion ?? "",
+            planifEstructura: fila.planifEstructura ?? "",
+            realEstructura: fila.realEstructura ?? "",
+            ausenciasSupervision: fila.ausenciasSupervision ?? "",
+            detalleAusenciasSupervision: fila.detalleAusenciasSupervision ?? "",
+            totalAusencias: fila.totalAusencias ?? "",
+            incidenciasEnTurno: Array.isArray(fila.incidenciasEnTurno)
+                ? fila.incidenciasEnTurno.map(inc => {
+                    const codigo = obtenerCodigoAusencia(inc.tipo || inc.codigo || "");
+                    const horario = inc.hora_inicio && inc.hora_fin
+                        ? `${inc.hora_inicio}-${inc.hora_fin}`
+                        : "Día completo";
+                    return `${inc.pin || ""} - ${codigo} - ${horario}`;
+                }).join(" | ")
+                : ""
+        };
+    });
+
+    return mapa;
 }
 
 function prepararFilasControlDiarioParaExcel() {
