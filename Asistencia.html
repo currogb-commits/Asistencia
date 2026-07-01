@@ -250,6 +250,16 @@
 <input type="text" class="search-box" id="buscador" placeholder="Buscar por PIN o nombre..." oninput="buscarTabla()" disabled>
 <span id="last-cruce">Sin datos, pulsa CRUZAR</span>
 </div>
+<div id="resumen-ausencias-operativo" style="display:none; margin: 0 0 12px 0; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--danger); border-radius: 8px; background: var(--card);">
+<div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+<div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--text);">
+<span><b>Sin justificar:</b> <span id="res-aus-sin">0</span></span>
+<span><b>Justificadas:</b> <span id="res-aus-just">0</span></span>
+<span><b>Total:</b> <span id="res-aus-total">0</span></span>
+</div>
+<button class="btn-modal btn-modal-primary" type="button" disabled title="Disponible en la siguiente fase">Justificar seleccionadas (próximamente)</button>
+</div>
+</div>
 <div class="table-wrap">
 <table id="tabla-res">
 <thead>
@@ -1277,6 +1287,31 @@ tr.style.display = visible ? "" : 'none';
 // ============================================================
 // FILTRO POR CATEGORÍA
 // ============================================================
+function renderResumenAusenciasOperativo(mostrar) {
+const panel = document.getElementById('resumen-ausencias-operativo');
+if (!panel) return;
+
+if (!mostrar) {
+panel.style.display = 'none';
+return;
+}
+
+const ausencias = Array.isArray(g_diarioOperativo?.filas)
+? g_diarioOperativo.filas.filter(fila => fila && fila.tipo === 'AUSENCIA' && fila.logado === false)
+: [];
+const sinJustificar = obtenerAusenciasJustificables();
+const fecha = g_diarioOperativo?.fecha || new Date().toISOString().slice(0, 10);
+const hora = normalizarHoraCruce(g_diarioOperativo?.hora_cruce || document.getElementById('hora-consulta').value);
+const justificadas = ausencias.filter(fila =>
+fila.incidencia || buscarIncidenciaActiva(fila.pin, fecha, hora)
+).length;
+
+document.getElementById('res-aus-sin').innerText = sinJustificar.length;
+document.getElementById('res-aus-just').innerText = justificadas;
+document.getElementById('res-aus-total').innerText = ausencias.length;
+panel.style.display = 'block';
+}
+
 function filtrar(tipo) {
 document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active'));
 const map = { ALL:'f-all', PRESENTE:'f-pres', SUPERVISOR:'f-sup', GTS:'f-gts', AUSENCIA:'f-aus', EXCESO:'f-exc', INACTIVO:'f-inact' };
@@ -1285,6 +1320,7 @@ document.getElementById('buscador').value = "";
 document.querySelectorAll('#tabla-res tbody tr').forEach(f => {
 f.style.display = (tipo === 'ALL' || f.getAttribute('data-type') === tipo) ? "" : 'none';
 });
+renderResumenAusenciasOperativo(tipo === 'AUSENCIA');
 }
 
 // ============================================================
