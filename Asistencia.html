@@ -257,7 +257,7 @@
 <span><b>Justificadas:</b> <span id="res-aus-just">0</span></span>
 <span><b>Total:</b> <span id="res-aus-total">0</span></span>
 </div>
-<button class="btn-modal btn-modal-primary" type="button" disabled title="Disponible en la siguiente fase">Justificar seleccionadas (próximamente)</button>
+<button id="btn-justificar-seleccionadas" class="btn-modal btn-modal-primary" type="button" disabled title="Disponible en la siguiente fase">Justificar seleccionadas (0)</button>
 </div>
 </div>
 <div class="table-wrap">
@@ -314,6 +314,7 @@ let g_personalMaestro = [];
 let g_diarioOperativo = null;
 let g_controlDiario = null;
 let g_mapaPlantillaControlDiario = null;
+let g_ausenciasSeleccionadas = new Set();
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -952,6 +953,7 @@ return 'FUTURO';
 // ============================================================
 function animarYCruzar() {
 const cont = document.getElementById('tabla-container');
+limpiarSeleccionAusencias();
 cont.style.opacity = "0.2";
 setTimeout(() => { procesarCruce(); cont.style.opacity = "1"; }, 150);
 }
@@ -1114,7 +1116,7 @@ claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
 }
 const estadoTexto = estadoHTML.replace(/<[^>]+>/g, '').trim();
 const accionJustificar = filterGroup === 'AUSENCIA' && !incidenciaActiva
-    ? `<br><button class="btn-clear" type="button" onclick="abrirJustificacionAusencia('${pin}')">Justificar</button>`
+    ? `<br><label style="display:inline-flex; align-items:center; gap:4px; margin-top:6px; font-size:12px; color:var(--text-muted);"><input type="checkbox" data-ausencia-select="true" onchange="toggleSeleccionAusencia('${pin}', this.checked)"> Seleccionar</label><br><button class="btn-clear" type="button" onclick="abrirJustificacionAusencia('${pin}')">Justificar</button>`
     : '';
 filasDiario.push({
     pin,
@@ -1287,6 +1289,30 @@ tr.style.display = visible ? "" : 'none';
 // ============================================================
 // FILTRO POR CATEGORÍA
 // ============================================================
+function actualizarContadorSeleccionAusencias() {
+const btn = document.getElementById('btn-justificar-seleccionadas');
+if (!btn) return;
+btn.innerText = `Justificar seleccionadas (${g_ausenciasSeleccionadas.size})`;
+}
+
+function toggleSeleccionAusencia(pin, seleccionado) {
+if (!pin) return;
+if (seleccionado) {
+g_ausenciasSeleccionadas.add(pin);
+} else {
+g_ausenciasSeleccionadas.delete(pin);
+}
+actualizarContadorSeleccionAusencias();
+}
+
+function limpiarSeleccionAusencias() {
+g_ausenciasSeleccionadas.clear();
+document.querySelectorAll('#tabla-res tbody input[data-ausencia-select="true"]').forEach(input => {
+input.checked = false;
+});
+actualizarContadorSeleccionAusencias();
+}
+
 function renderResumenAusenciasOperativo(mostrar) {
 const panel = document.getElementById('resumen-ausencias-operativo');
 if (!panel) return;
@@ -1309,6 +1335,7 @@ fila.incidencia || buscarIncidenciaActiva(fila.pin, fecha, hora)
 document.getElementById('res-aus-sin').innerText = sinJustificar.length;
 document.getElementById('res-aus-just').innerText = justificadas;
 document.getElementById('res-aus-total').innerText = ausencias.length;
+actualizarContadorSeleccionAusencias();
 panel.style.display = 'block';
 }
 
