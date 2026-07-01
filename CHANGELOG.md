@@ -4,6 +4,24 @@ Todas las modificaciones importantes del proyecto Asistencia se registrarán en 
 
 ---
 
+# v6.1.0 (Estabilización)
+
+## Estabilización documental
+
+### Añadido
+
+* Hoja de ruta ordenada para la evolución desde V6.1 hasta V7.
+* Manual técnico breve del estado actual de la aplicación.
+* Guía básica de uso para supervisores.
+
+### Notas
+
+* No se modifica la lógica funcional de la aplicación.
+* No se modifica `Asistencia.html`.
+* Esta versión prepara el proyecto para futuras extracciones controladas de CSS y JavaScript.
+
+---
+
 # v6.0.0 (En desarrollo)
 
 ## Refactorización de arquitectura
