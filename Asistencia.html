@@ -1891,6 +1891,36 @@ function cancelarEdicionTipo() {
     if (errorEl) errorEl.innerText = '';
 }
 
+function obtenerAusenciasJustificables() {
+    if (!Array.isArray(g_diarioOperativo?.filas)) return [];
+    return g_diarioOperativo.filas.filter(fila =>
+        fila &&
+        fila.tipo === 'AUSENCIA' &&
+        fila.logado === false &&
+        !fila.incidencia
+    );
+}
+
+function existeIncidenciaDuplicada(pin, fecha, inicio, fin) {
+    if (!pin || !fecha || !Array.isArray(g_incidencias)) return false;
+
+    const tieneInicioFin = Boolean(inicio && fin);
+    const esDiaCompleto = !inicio && !fin;
+
+    return g_incidencias.some(inc => {
+        if (!inc || inc.pin !== pin || inc.fecha !== fecha) return false;
+
+        const incDiaCompleto = !inc.hora_inicio && !inc.hora_fin;
+        if (esDiaCompleto || incDiaCompleto) return true;
+
+        if (tieneInicioFin && inc.hora_inicio && inc.hora_fin) {
+            return inc.hora_fin > inicio && inc.hora_inicio < fin;
+        }
+
+        return false;
+    });
+}
+
 function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
     if (!pin || !fechaConsulta || !horaConsulta) return null;
     const incidencia = g_incidencias.find(inc => {
