@@ -1817,11 +1817,6 @@ function renderDiarioOperativo() {
 // INCIDENCIAS v6 - INICIO
 let g_incidencias = [];
 
-function obtenerCodigoAusencia(tipo) {
-    const found = g_tiposAusencia.find(item => item.tipo === tipo);
-    return found ? found.codigo : tipo;
-}
-
 function restaurarTiposAusenciaDefault() {
     g_tiposAusencia = [...TIPOS_AUSENCIA_DEFAULT];
     guardarTiposAusencia();
