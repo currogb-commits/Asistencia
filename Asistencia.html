@@ -1094,6 +1094,9 @@ claseCSS='row-inactive'; filterGroup='INACTIVO'; cInact++;
 }
 }
 const estadoTexto = estadoHTML.replace(/<[^>]+>/g, '').trim();
+const accionJustificar = filterGroup === 'AUSENCIA' && !incidenciaActiva
+    ? `<br><button class="btn-clear" type="button" onclick="abrirJustificacionAusencia('${pin}')">Justificar</button>`
+    : '';
 filasDiario.push({
     pin,
     nombre: datos.nombre,
@@ -1115,7 +1118,7 @@ tbody.innerHTML += `<tr data-type="${filterGroup}" data-pin="${pin}" data-nombre
 <td>${datos.nombre}</td>
 <td><b>${datos.horario}</b></td>
 <td>${iconoAvaya}</td>
-<td>${estadoHTML}</td>
+<td>${estadoHTML}${accionJustificar}</td>
 </tr>`;
 });
 
@@ -1910,6 +1913,32 @@ function abrirModalIncidencias() {
     renderTipoAusenciaSelect();
     renderTiposAusenciaUI();
     renderIncidencias();
+    document.getElementById('modalIncidencias').style.display = 'flex';
+}
+
+function abrirJustificacionAusencia(pin) {
+    const fila = Array.isArray(g_diarioOperativo?.filas)
+        ? g_diarioOperativo.filas.find(item => item.pin === pin && item.tipo === 'AUSENCIA' && item.logado === false)
+        : null;
+    if (!fila) {
+        mostrarToast('⚠️ No se encontró la ausencia en el último cruce.');
+        return;
+    }
+
+    const txtCuadrante = document.getElementById('raw-cuadrante').value.trim();
+    construirRosterDesdeCuadrante(txtCuadrante);
+    renderSugerenciasAgenda([]);
+    renderTipoAusenciaSelect();
+    renderTiposAusenciaUI();
+    renderIncidencias();
+    limpiarFormularioIncidencia();
+
+    document.getElementById('inc-pin').value = fila.pin || '';
+    document.getElementById('inc-empleado').value = fila.nombre || '';
+    document.getElementById('inc-buscar-empleado').value = `${fila.pin || ''} ${fila.nombre || ''}`.trim();
+    document.getElementById('inc-fecha').value = g_diarioOperativo?.fecha || new Date().toISOString().split('T')[0];
+    document.getElementById('inc-turno-detectado').value = fila.horario || '';
+    document.getElementById('inc-roster-info').innerText = 'Cargado desde la ausencia detectada en el último cruce.';
     document.getElementById('modalIncidencias').style.display = 'flex';
 }
 
