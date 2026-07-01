@@ -263,6 +263,7 @@
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="js/utils.js"></script>
 <script>
 // ============================================================
 // LISTA DE SUPERVISORES (editable desde UI, persistida en localStorage)
@@ -1860,16 +1861,6 @@ function renderDiarioOperativo() {
 
 // INCIDENCIAS v6 - INICIO
 let g_incidencias = [];
-
-function escapeHTML(str) {
-    if (!str) return "";
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
 
 function inicializarIncidencias() {
     const guardado = localStorage.getItem('wfm_incidencias_v6');
