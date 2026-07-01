@@ -435,12 +435,6 @@ document.getElementById('modalAlarma').style.display = 'none';
 // ============================================================
 // UTILIDADES
 // ============================================================
-function mostrarToast(msg) {
-const t = document.createElement('div');
-t.className = 'toast'; t.innerText = msg;
-document.body.appendChild(t);
-setTimeout(() => t.remove(), 3000);
-}
 function limpiarCaja(id) {
 document.getElementById(id).value = "";
 guardarLocal();
@@ -1415,13 +1409,6 @@ document.getElementById('wp-text').value = txt;
 document.getElementById('modalWP').style.display = 'flex';
 }
 
-function copiarTexto(id) {
-navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
-mostrarToast("✅ ¡Copiado al portapapeles!");
-document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none');
-});
-}
-
 function abrirModalControlDiario() {
     generarControlDiario();
     const textarea = document.getElementById('control-diario-text');
@@ -1704,10 +1691,6 @@ function construirMapaPlantillaControlDiario(workbook) {
 function abrirDiarioOperativo() {
     renderDiarioOperativo();
     document.getElementById('modalDiarioOperativo').style.display = 'flex';
-}
-
-function cerrarDiarioOperativo() {
-    document.getElementById('modalDiarioOperativo').style.display = 'none';
 }
 
 function renderDiarioOperativo() {
