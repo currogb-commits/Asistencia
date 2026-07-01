@@ -51,6 +51,7 @@
 <div class="modal-content" style="border-top: 6px solid var(--primary); max-width: 760px; width: 100%;">
 <p class="modal-title">Diario Operativo</p>
 <div id="diario-operativo-body" style="max-height: 65vh; overflow-y:auto; margin-bottom:16px; padding-right:4px; color:var(--text);"></div>
+<button class="btn-modal btn-modal-primary" onclick="exportarDiarioOperativo()">Descargar JSON</button>
 <button class="btn-modal btn-modal-secondary" onclick="cerrarDiarioOperativo()">Cerrar</button>
 </div>
 </div>
@@ -1735,6 +1736,28 @@ function renderDiarioOperativo() {
             </div>
         </div>
     `;
+}
+
+function exportarDiarioOperativo() {
+    if (!g_diarioOperativo) {
+        mostrarToast('⚠️ Primero cruza datos para generar el Diario Operativo.');
+        return;
+    }
+
+    const ahora = new Date();
+    const fecha = (g_diarioOperativo.fecha || ahora.toISOString().slice(0, 10)).replace(/[^0-9-]/g, '-');
+    const hora = (g_diarioOperativo.hora_cruce || ahora.toTimeString().slice(0, 5)).replace(':', '-');
+    const blob = new Blob([JSON.stringify(g_diarioOperativo, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `diario_operativo_${fecha}_${hora}.json`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    mostrarToast('✅ Diario Operativo exportado correctamente');
 }
 
 // INCIDENCIAS v6 - INICIO
