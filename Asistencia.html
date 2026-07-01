@@ -1509,7 +1509,16 @@ function prepararFilasControlDiarioParaExcel() {
 }
 
 function copiarTablaExcelControlDiario() {
+    if (!g_controlDiario || !Array.isArray(g_controlDiario.columnas) || !g_controlDiario.columnas.length) {
+        mostrarToast('⚠️ Primero genera el Control Diario con datos antes de copiar para Excel.');
+        return;
+    }
+
     const filas = prepararFilasControlDiarioParaExcel();
+    if (!Array.isArray(filas) || filas.length <= 1) {
+        mostrarToast('⚠️ No hay filas suficientes para copiar a Excel.');
+        return;
+    }
 
     const prepararCeldaTSV = value => {
         let text = String(value ?? '');
@@ -1521,10 +1530,15 @@ function copiarTablaExcelControlDiario() {
     };
 
     const tsv = filas.map(row => row.map(prepararCeldaTSV).join('\t')).join('\n');
+    if (!tsv.trim()) {
+        mostrarToast('⚠️ La tabla Excel está vacía.');
+        return;
+    }
+
     navigator.clipboard.writeText(tsv).then(() => {
         mostrarToast('✅ Tabla Excel copiada. Pega en Excel con Ctrl+V.');
     }).catch(() => {
-        mostrarToast('⚠️ No se pudo copiar la tabla al portapapeles.');
+        mostrarToast('⚠️ No se pudo copiar la tabla al portapapeles. Revisa permisos del navegador.');
     });
 }
 
