@@ -129,6 +129,18 @@ justify-content: center; gap: 8px;
 .btn-wp { background: linear-gradient(135deg, #25D366, #1da851); box-shadow: 0 4px 0 #128c3a; display: none; }
 .btn-ocup { display: none; }
 .btn-export { display: none; }
+.panel-turno { background: var(--card); border: 1px solid var(--border); border-left: 5px solid var(--primary); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 20px; }
+.panel-turno__header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.panel-turno__header h3 { font-size: 15px; color: var(--text); margin: 0; }
+.panel-turno__header p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.panel-turno__empty { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
+.panel-turno__grid { display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.panel-turno__metric { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.panel-turno__metric span { display: block; font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+.panel-turno__metric b { display: block; font-size: 20px; color: var(--text); margin-top: 4px; }
+.panel-turno__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.panel-turno__actions .btn-clear { padding: 7px 12px; font-size: 12px; }
+@media(max-width:900px) { .panel-turno__grid { grid-template-columns: repeat(2, 1fr); } }
 .agenda-wrap { display: grid; gap: 18px; }
 .agenda-seccion { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
 .agenda-seccion__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; }

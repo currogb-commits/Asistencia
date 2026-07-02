@@ -247,6 +247,11 @@
 </button>
 <!-- INCIDENCIAS v6 - INICIO -->
 <button class="btn-top" onclick="abrirModalIncidencias()"> 📝 Incidencias</button>
+<button class="btn-top" type="button" onclick="crearArchivoIncidenciasCompartido()">Crear BBDD</button>
+<button class="btn-top" type="button" onclick="conectarArchivoIncidenciasCompartido()">Conectar BBDD</button>
+<button class="btn-top" type="button" onclick="actualizarIncidenciasDesdeArchivoCompartido()">Actualizar BBDD</button>
+<button class="btn-top" type="button" id="btn-guardar-bbdd" onclick="guardarArchivoIncidenciasCompartido()" disabled>Guardar BBDD</button>
+<span id="bbdd-compartida-estado" style="font-size:12px; color:var(--text-muted); padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--card);">BBDD: no conectada</span>
 <button class="btn-top" onclick="abrirModalControlDiario()"> 📄 Control Diario</button>
 <button class="btn-top" onclick="abrirModalPlantilla()"> 📋 Plantilla de empleados</button>
 <!-- INCIDENCIAS v6 - FIN -->
@@ -280,6 +285,16 @@
 <button id="btn-export" class="btn-main btn-view btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
 <button id="btn-diario" class="btn-main btn-view" onclick="abrirDiarioOperativo()"> 5. DIARIO OPERATIVO</button>
 <button id="btn-bandeja-franja" class="btn-main btn-view" onclick="abrirBandejaFranja()">Bandeja franja</button>
+</div>
+
+<div class="panel-turno" id="panel-turno">
+<div class="panel-turno__header">
+<div>
+<h3>Panel del Turno</h3>
+<p id="panel-turno-subtitulo">Ejecuta primero CRUZAR DATOS.</p>
+</div>
+</div>
+<div id="panel-turno-body" class="panel-turno__empty">Ejecuta primero CRUZAR DATOS.</div>
 </div>
 
 <div class="stats">
@@ -365,6 +380,8 @@ let g_ausenciasSeleccionadas = new Set();
 let g_previewJustificacionMultiple = [];
 let g_avisoIncidenciasCompartidasMostrado = false;
 let g_filtroFechaIncidencias = 'activas';
+let g_archivoIncidenciasCompartidoHandle = null;
+let g_archivoIncidenciasCompartidoMeta = null;
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -1144,7 +1161,7 @@ function animarYCruzar() {
 const cont = document.getElementById('tabla-container');
 limpiarSeleccionAusencias();
 cont.style.opacity = "0.2";
-setTimeout(() => { procesarCruce(); cont.style.opacity = "1"; }, 150);
+setTimeout(() => { procesarCruce(); renderPanelTurno(); cont.style.opacity = "1"; }, 150);
 }
 
 function procesarCruce() {
@@ -2193,17 +2210,16 @@ function renderFilasBandejaFranja(items) {
     return html;
 }
 
-function abrirBandejaFranja() {
-    if (!Array.isArray(g_diarioOperativo?.filas)) {
-        mostrarToast('Primero cruza datos para generar la Bandeja de franja.');
-        return;
-    }
-
-    const horaCruce = normalizarHoraCruce(g_diarioOperativo.hora_cruce || document.getElementById('hora-consulta').value);
+function obtenerDatosBandejaFranja() {
+    const horaCruce = normalizarHoraCruce(g_diarioOperativo?.hora_cruce || document.getElementById('hora-consulta').value);
     const horaFinVentana = sumarMinutosHoraBandeja(horaCruce, 60);
     const entradas = [];
     const salidas = [];
     const ausencias = [];
+
+    if (!Array.isArray(g_diarioOperativo?.filas)) {
+        return { horaCruce, horaFinVentana, entradas, salidas, ausencias };
+    }
 
     g_diarioOperativo.filas.forEach(fila => {
         const horas = extraerHorasTurnoBandeja(fila);
@@ -2223,6 +2239,64 @@ function abrirBandejaFranja() {
     entradas.sort((a, b) => a.hora.localeCompare(b.hora) || String(a.fila.nombre || '').localeCompare(String(b.fila.nombre || ''), 'es'));
     salidas.sort((a, b) => a.hora.localeCompare(b.hora) || String(a.fila.nombre || '').localeCompare(String(b.fila.nombre || ''), 'es'));
     ausencias.sort((a, b) => String(a.fila.nombre || '').localeCompare(String(b.fila.nombre || ''), 'es'));
+    return { horaCruce, horaFinVentana, entradas, salidas, ausencias };
+}
+
+function renderPanelTurno() {
+    const body = document.getElementById('panel-turno-body');
+    const subtitulo = document.getElementById('panel-turno-subtitulo');
+    if (!body) return;
+
+    if (!Array.isArray(g_diarioOperativo?.filas)) {
+        if (subtitulo) subtitulo.innerText = 'Ejecuta primero CRUZAR DATOS.';
+        body.className = 'panel-turno__empty';
+        body.innerText = 'Ejecuta primero CRUZAR DATOS.';
+        return;
+    }
+
+    const contadores = g_diarioOperativo.contadores || g_wp;
+    const fecha = g_diarioOperativo.fecha || new Date().toISOString().slice(0, 10);
+    const hora = normalizarHoraCruce(g_diarioOperativo.hora_cruce || document.getElementById('hora-consulta').value);
+    const ausenciasActivas = g_diarioOperativo.filas.filter(fila => fila && fila.tipo === 'AUSENCIA' && fila.logado === false);
+    const justificadas = ausenciasActivas.filter(fila => fila.incidencia || buscarIncidenciaActiva(fila.pin, fecha, hora)).length;
+    const pendientes = Math.max(0, ausenciasActivas.length - justificadas);
+    const planificados = (contadores.g_plan || 0) + (contadores.gts_plan || 0) + (contadores.s_plan || 0);
+    const logados = (contadores.g_real || 0) + (contadores.gts_real || 0) + (contadores.s_real || 0);
+    const bandeja = obtenerDatosBandejaFranja();
+
+    if (subtitulo) subtitulo.innerText = `Estado del turno · ${fecha} ${hora}`;
+    body.className = '';
+    body.innerHTML = `
+        <div class="panel-turno__grid">
+            <div class="panel-turno__metric"><span>Planificados</span><b>${escapeHTML(String(planificados))}</b></div>
+            <div class="panel-turno__metric"><span>Logados</span><b>${escapeHTML(String(logados))}</b></div>
+            <div class="panel-turno__metric"><span>Ausencias</span><b>${escapeHTML(String(ausenciasActivas.length))}</b></div>
+            <div class="panel-turno__metric"><span>Justificadas</span><b>${escapeHTML(String(justificadas))}</b></div>
+            <div class="panel-turno__metric"><span>Pendientes de revisar</span><b>${escapeHTML(String(pendientes))}</b></div>
+            <div class="panel-turno__metric"><span>Próximas incorporaciones</span><b>${escapeHTML(String(bandeja.entradas.length))}</b></div>
+            <div class="panel-turno__metric"><span>Próximas finalizaciones</span><b>${escapeHTML(String(bandeja.salidas.length))}</b></div>
+        </div>
+        <div class="panel-turno__actions">
+            <button class="btn-clear" type="button" onclick="filtrar('AUSENCIA')">Revisar ausencias</button>
+            <button class="btn-clear" type="button" onclick="abrirBandejaFranja()">Bandeja de franja</button>
+            <button class="btn-clear" type="button" onclick="abrirWhatsApp()">WhatsApp</button>
+            <button class="btn-clear" type="button" onclick="abrirCentroIncidenciasTurno()">Centro de incidencias</button>
+        </div>
+    `;
+}
+
+function abrirCentroIncidenciasTurno() {
+    abrirModalIncidencias();
+    mostrarTabIncidencias('historico');
+}
+
+function abrirBandejaFranja() {
+    if (!Array.isArray(g_diarioOperativo?.filas)) {
+        mostrarToast('Primero cruza datos para generar la Bandeja de franja.');
+        return;
+    }
+
+    const { horaCruce, horaFinVentana, entradas, salidas, ausencias } = obtenerDatosBandejaFranja();
 
     const body = document.getElementById('bandeja-franja-body');
     body.innerHTML = `
@@ -2589,6 +2663,7 @@ function mostrarTabIncidencias(tab) {
     if (tab === 'historico') {
         poblarFiltrosCentroIncidencias();
         renderUltimaImportacionIncidencias();
+        renderEstadoArchivoIncidenciasCompartido();
         renderIncidencias();
     }
 }
@@ -2706,6 +2781,139 @@ function renderUltimaImportacionIncidencias() {
     if (!indicador) return;
     const ultima = localStorage.getItem('wfm_incidencias_ultima_importacion');
     indicador.innerText = `Última importación: ${ultima || 'sin registrar'}`;
+}
+
+function renderEstadoArchivoIncidenciasCompartido() {
+    const estado = document.getElementById('bbdd-compartida-estado');
+    const btnGuardar = document.getElementById('btn-guardar-bbdd');
+    if (btnGuardar) btnGuardar.disabled = !g_archivoIncidenciasCompartidoHandle;
+    if (!estado) return;
+    if (!g_archivoIncidenciasCompartidoHandle || !g_archivoIncidenciasCompartidoMeta) {
+        estado.innerText = 'BBDD: no conectada';
+        return;
+    }
+    estado.innerText = `BBDD: ${g_archivoIncidenciasCompartidoMeta.nombre} · última lectura/escritura ${g_archivoIncidenciasCompartidoMeta.ultimaLectura} · ${g_archivoIncidenciasCompartidoMeta.incidencias} incidencias`;
+}
+
+async function leerIncidenciasDesdeHandleCompartido(handle) {
+    const file = await handle.getFile();
+    const texto = await file.text();
+    let incidencias;
+    try {
+        incidencias = JSON.parse(texto || '[]');
+    } catch (e) {
+        throw new Error('El archivo compartido no contiene un JSON válido');
+    }
+    if (!Array.isArray(incidencias)) {
+        throw new Error('El JSON de incidencias compartido debe ser un array');
+    }
+    return { file, incidencias };
+}
+
+function aplicarIncidenciasDesdeArchivoCompartido(file, incidencias) {
+    g_incidencias = incidencias;
+    guardarIncidenciasLocales();
+    renderIncidencias();
+    actualizarMetaArchivoIncidenciasCompartido(file, incidencias.length);
+}
+
+function actualizarMetaArchivoIncidenciasCompartido(file, totalIncidencias) {
+    const ahora = new Date();
+    g_archivoIncidenciasCompartidoMeta = {
+        nombre: file.name || 'incidencias.json',
+        ultimaLectura: ahora.toTimeString().slice(0, 5),
+        incidencias: totalIncidencias,
+        firma: `${file.lastModified}:${file.size}`
+    };
+    renderEstadoArchivoIncidenciasCompartido();
+}
+
+async function conectarArchivoIncidenciasCompartido() {
+    if (!window.showOpenFilePicker) {
+        mostrarToast('Guardado compartido no disponible en este navegador. Usa importar/exportar.');
+        return;
+    }
+    try {
+        const handles = await window.showOpenFilePicker({
+            multiple: false,
+            types: [{ description: 'Archivo JSON de incidencias', accept: { 'application/json': ['.json'] } }]
+        });
+        const handle = handles && handles[0];
+        if (!handle) return;
+        const { file, incidencias } = await leerIncidenciasDesdeHandleCompartido(handle);
+        g_archivoIncidenciasCompartidoHandle = handle;
+        aplicarIncidenciasDesdeArchivoCompartido(file, incidencias);
+        mostrarToast(`Archivo compartido conectado: ${incidencias.length} incidencias leídas.`);
+    } catch (e) {
+        if (e && e.name === 'AbortError') return;
+        mostrarToast(`⚠️ ${e.message || 'No se pudo conectar el archivo compartido'}`);
+    }
+}
+
+async function actualizarIncidenciasDesdeArchivoCompartido() {
+    if (!g_archivoIncidenciasCompartidoHandle) {
+        mostrarToast('Conecta primero un archivo compartido de incidencias.');
+        return;
+    }
+    try {
+        const { file, incidencias } = await leerIncidenciasDesdeHandleCompartido(g_archivoIncidenciasCompartidoHandle);
+        aplicarIncidenciasDesdeArchivoCompartido(file, incidencias);
+        mostrarToast(`Incidencias actualizadas desde archivo: ${incidencias.length}.`);
+    } catch (e) {
+        mostrarToast(`⚠️ ${e.message || 'No se pudo actualizar desde el archivo compartido'}`);
+    }
+}
+
+async function crearArchivoIncidenciasCompartido() {
+    if (!window.showSaveFilePicker) {
+        mostrarToast('Crear BBDD no disponible en este navegador. Usa Exportar incidencias.');
+        return;
+    }
+    try {
+        const handle = await window.showSaveFilePicker({
+            suggestedName: 'incidencias.json',
+            types: [{ description: 'Archivo JSON de incidencias', accept: { 'application/json': ['.json'] } }]
+        });
+        if (!handle) return;
+        const incidencias = Array.isArray(g_incidencias) ? g_incidencias : [];
+        const writable = await handle.createWritable();
+        await writable.write(JSON.stringify(incidencias, null, 2));
+        await writable.close();
+        const file = await handle.getFile();
+        g_archivoIncidenciasCompartidoHandle = handle;
+        actualizarMetaArchivoIncidenciasCompartido(file, incidencias.length);
+        mostrarToast(`BBDD creada y conectada: ${incidencias.length} incidencias.`);
+    } catch (e) {
+        if (e && e.name === 'AbortError') return;
+        mostrarToast(`⚠️ ${e.message || 'No se pudo crear la BBDD compartida'}`);
+    }
+}
+
+async function guardarArchivoIncidenciasCompartido() {
+    if (!g_archivoIncidenciasCompartidoHandle) {
+        mostrarToast('Conecta primero una BBDD compartida.');
+        return;
+    }
+    try {
+        const fileActual = await g_archivoIncidenciasCompartidoHandle.getFile();
+        const firmaActual = `${fileActual.lastModified}:${fileActual.size}`;
+        const firmaConocida = g_archivoIncidenciasCompartidoMeta?.firma || '';
+        if (firmaConocida && firmaActual !== firmaConocida) {
+            mostrarToast('La BBDD ha cambiado. Pulsa Actualizar BBDD antes de guardar.');
+            return;
+        }
+
+        const incidencias = Array.isArray(g_incidencias) ? g_incidencias : [];
+        const writable = await g_archivoIncidenciasCompartidoHandle.createWritable();
+        await writable.write(JSON.stringify(incidencias, null, 2));
+        await writable.close();
+
+        const fileGuardado = await g_archivoIncidenciasCompartidoHandle.getFile();
+        actualizarMetaArchivoIncidenciasCompartido(fileGuardado, incidencias.length);
+        mostrarToast(`BBDD guardada correctamente: ${incidencias.length} incidencias.`);
+    } catch (e) {
+        mostrarToast(`⚠️ ${e.message || 'No se pudo guardar la BBDD compartida'}`);
+    }
 }
 
 function exportarIncidencias() {
@@ -2908,13 +3116,16 @@ function renderIncidencias() {
     const contador = document.getElementById('inc-contador');
     if (contador) contador.innerText = `Mostrando ${incidenciasFiltradas.length} de ${g_incidencias.length} incidencias`;
 
-    const secciones = [
+    let secciones = [
         { key: 'activasAhora', title: 'Activas ahora', headerClass: 'agenda-seccion__header--success', cardClass: 'incidencia-card--activa' },
         { key: 'proximasHoy', title: 'Próximas hoy', headerClass: 'agenda-seccion__header--warning', cardClass: 'incidencia-card--proxima' },
         { key: 'finalizadasHoy', title: 'Finalizadas hoy', headerClass: 'agenda-seccion__header--muted', cardClass: 'incidencia-card--finalizada' },
         { key: 'futuras', title: 'Futuras', headerClass: 'agenda-seccion__header--info', cardClass: 'incidencia-card--futura' },
         { key: 'pasadas', title: 'Pasadas', headerClass: 'agenda-seccion__header--dark', cardClass: 'incidencia-card--pasada' }
     ];
+    if (g_filtroFechaIncidencias === 'futuras') {
+        secciones = secciones.filter(seccion => seccion.key === 'futuras');
+    }
 
     wrapper.innerHTML = secciones.map(seccion => {
         const items = agenda[seccion.key] || [];
@@ -2981,6 +3192,8 @@ document.documentElement.setAttribute('data-theme', theme);
 document.getElementById('btn-darkmode').innerText = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
 if (localStorage.getItem("wfm_cuadrante")) document.getElementById("raw-cuadrante").value = localStorage.getItem("wfm_cuadrante");
 if (localStorage.getItem("wfm_avaya")) document.getElementById("raw-avaya").value = localStorage.getItem("wfm_avaya");
+renderPanelTurno();
+renderEstadoArchivoIncidenciasCompartido();
 };
 </script>
 </body>
