@@ -69,6 +69,14 @@
 <button class="btn-modal btn-modal-secondary" onclick="cerrarDiarioOperativo()">Cerrar</button>
 </div>
 </div>
+<div id="modalBandejaFranja" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--primary); width: 900px; max-width: 95vw;">
+<p class="modal-title">Bandeja de franja</p>
+<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Vista basada en el último cruce. Si has justificado incidencias, vuelve a cruzar.</p>
+<div id="bandeja-franja-body" style="max-height: 65vh; overflow-y:auto; margin-bottom:16px; padding-right:4px; color:var(--text);"></div>
+<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalBandejaFranja')">Cerrar</button>
+</div>
+</div>
 <div id="modalControlDiario" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--primary); width: 760px; max-width: 95vw;">
 <p class="modal-title">Control Diario</p>
@@ -257,6 +265,7 @@
 <button id="btn-whatsapp" class="btn-main btn-wp" onclick="abrirWhatsApp()"> 3. WHATSAPP</button>
 <button id="btn-export" class="btn-main btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
 <button id="btn-diario" class="btn-main" onclick="abrirDiarioOperativo()"> 5. DIARIO OPERATIVO</button>
+<button id="btn-bandeja-franja" class="btn-main" style="background:linear-gradient(135deg, #2980b9, #1f5f8b); box-shadow:0 4px 0 #154360; color:#fff;" onclick="abrirBandejaFranja()">Bandeja franja</button>
 </div>
 
 <div class="stats">
@@ -1905,6 +1914,107 @@ function construirMapaPlantillaControlDiario(workbook) {
 function abrirDiarioOperativo() {
     renderDiarioOperativo();
     document.getElementById('modalDiarioOperativo').style.display = 'flex';
+}
+
+function extraerHorasTurnoBandeja(fila) {
+    const match = String(fila?.horario || '').match(/(\d{1,2}:\d{2})\s*[-\^]\s*(\d{1,2}:\d{2})/);
+    if (!match) return null;
+    return {
+        inicio: normalizarHoraCruce(match[1]),
+        fin: normalizarHoraCruce(match[2])
+    };
+}
+
+function sumarMinutosHoraBandeja(hora, minutos) {
+    const total = (timeToMins(hora) + minutos) % 1440;
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function horaEnVentanaBandeja(hora, inicio, fin) {
+    const t = timeToMins(hora);
+    const ini = timeToMins(inicio);
+    const end = timeToMins(fin);
+    if (ini <= end) return t >= ini && t <= end;
+    return t >= ini || t <= end;
+}
+
+function incidenciaTextoBandeja(fila) {
+    if (!fila?.incidencia) return '-';
+    const inc = fila.incidencia;
+    const horario = inc.hora_inicio && inc.hora_fin ? `${inc.hora_inicio}-${inc.hora_fin}` : 'Día completo';
+    return `${inc.tipo || 'Incidencia'} ${horario}`;
+}
+
+function renderFilasBandejaFranja(items) {
+    if (!items.length) return '<div style="padding:10px; color:var(--text-muted); font-size:13px;">Sin registros en esta ventana.</div>';
+
+    let html = '<table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="background:var(--bg); color:var(--text-muted); text-align:left;"><th style="padding:8px; border-bottom:1px solid var(--border);">Hora</th><th style="padding:8px; border-bottom:1px solid var(--border);">PIN</th><th style="padding:8px; border-bottom:1px solid var(--border);">Empleado</th><th style="padding:8px; border-bottom:1px solid var(--border);">Horario</th><th style="padding:8px; border-bottom:1px solid var(--border);">Avaya</th><th style="padding:8px; border-bottom:1px solid var(--border);">Incidencia</th></tr></thead><tbody>';
+    items.forEach(item => {
+        const fila = item.fila;
+        html += `<tr><td style="padding:8px; border-bottom:1px solid var(--border);"><b>${escapeHTML(item.hora || '-')}</b></td><td style="padding:8px; border-bottom:1px solid var(--border);">${escapeHTML(fila.pin || '')}</td><td style="padding:8px; border-bottom:1px solid var(--border);">${escapeHTML(fila.nombre || '')}</td><td style="padding:8px; border-bottom:1px solid var(--border);">${escapeHTML(fila.horario || '')}</td><td style="padding:8px; border-bottom:1px solid var(--border);">${escapeHTML(fila.iconoAvaya || (fila.logado ? 'Logado' : 'No logado'))}</td><td style="padding:8px; border-bottom:1px solid var(--border);">${escapeHTML(incidenciaTextoBandeja(fila))}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function abrirBandejaFranja() {
+    if (!Array.isArray(g_diarioOperativo?.filas)) {
+        mostrarToast('Primero cruza datos para generar la Bandeja de franja.');
+        return;
+    }
+
+    const horaCruce = normalizarHoraCruce(g_diarioOperativo.hora_cruce || document.getElementById('hora-consulta').value);
+    const horaFinVentana = sumarMinutosHoraBandeja(horaCruce, 60);
+    const entradas = [];
+    const salidas = [];
+    const ausencias = [];
+
+    g_diarioOperativo.filas.forEach(fila => {
+        const horas = extraerHorasTurnoBandeja(fila);
+        if (!horas) return;
+
+        if (horaEnVentanaBandeja(horas.inicio, horaCruce, horaFinVentana)) {
+            entradas.push({ hora: horas.inicio, fila });
+        }
+        if (horaEnVentanaBandeja(horas.fin, horaCruce, horaFinVentana)) {
+            salidas.push({ hora: horas.fin, fila });
+        }
+        if (fila.tipo === 'AUSENCIA' && fila.logado === false && evaluarTurno(horaCruce, horas.inicio, horas.fin) === 'ACTIVO') {
+            ausencias.push({ hora: horaCruce, fila });
+        }
+    });
+
+    entradas.sort((a, b) => a.hora.localeCompare(b.hora) || String(a.fila.nombre || '').localeCompare(String(b.fila.nombre || ''), 'es'));
+    salidas.sort((a, b) => a.hora.localeCompare(b.hora) || String(a.fila.nombre || '').localeCompare(String(b.fila.nombre || ''), 'es'));
+    ausencias.sort((a, b) => String(a.fila.nombre || '').localeCompare(String(b.fila.nombre || ''), 'es'));
+
+    const body = document.getElementById('bandeja-franja-body');
+    body.innerHTML = `
+        <div style="display:grid; gap:12px;">
+            <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px;">
+                <span><b>Hora del cruce:</b> ${escapeHTML(horaCruce)}</span>
+                <span><b>Ventana:</b> ${escapeHTML(horaCruce)} - ${escapeHTML(horaFinVentana)}</span>
+                <span><b>Entradas:</b> ${entradas.length}</span>
+                <span><b>Salidas:</b> ${salidas.length}</span>
+                <span><b>Ausencias actuales:</b> ${ausencias.length}</span>
+            </div>
+            <div>
+                <h3 style="font-size:14px; margin:0 0 8px 0; color:var(--text);">Entradas próximas</h3>
+                ${renderFilasBandejaFranja(entradas)}
+            </div>
+            <div>
+                <h3 style="font-size:14px; margin:0 0 8px 0; color:var(--text);">Salidas próximas</h3>
+                ${renderFilasBandejaFranja(salidas)}
+            </div>
+            <div>
+                <h3 style="font-size:14px; margin:0 0 8px 0; color:var(--text);">Ausencias actuales</h3>
+                ${renderFilasBandejaFranja(ausencias)}
+            </div>
+        </div>
+    `;
+    document.getElementById('modalBandejaFranja').style.display = 'flex';
 }
 
 function renderDiarioOperativo() {
