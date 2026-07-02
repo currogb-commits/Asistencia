@@ -246,14 +246,14 @@
 <div class="card card-siebel">
 <div class="card-header">
 <h3> 1. Cuadrante (PGPlanning)</h3>
-<button class="btn-clear" onclick="limpiarCaja('raw-cuadrante')"> Limpiar</button>
+<button class="btn-clear btn-danger" onclick="limpiarCaja('raw-cuadrante')"> Limpiar</button>
 </div>
 <textarea id="raw-cuadrante" class="data-input" placeholder="Pega aquí el contenido del cuadrante..." oninput="guardarLocal()"></textarea>
 </div>
 <div class="card card-avaya">
 <div class="card-header">
 <h3> 2. Logados en AVAYA</h3>
-<button class="btn-clear" onclick="limpiarCaja('raw-avaya')"> Limpiar</button>
+<button class="btn-clear btn-danger" onclick="limpiarCaja('raw-avaya')"> Limpiar</button>
 </div>
 <textarea id="raw-avaya" class="data-input" placeholder="Pega aquí la tabla de logados de Avaya..." oninput="guardarLocal()"></textarea>
 </div>
@@ -261,11 +261,11 @@
 
 <div class="btn-group">
 <button class="btn-main btn-process" onclick="animarYCruzar()"> 1. CRUZAR DATOS</button>
-<button id="btn-ocup" class="btn-main btn-ocup" onclick="mostrarOcupacion()"> 2. VER OCUPACIÓN</button>
+<button id="btn-ocup" class="btn-main btn-view btn-ocup" onclick="mostrarOcupacion()"> 2. VER OCUPACIÓN</button>
 <button id="btn-whatsapp" class="btn-main btn-wp" onclick="abrirWhatsApp()"> 3. WHATSAPP</button>
-<button id="btn-export" class="btn-main btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
-<button id="btn-diario" class="btn-main" onclick="abrirDiarioOperativo()"> 5. DIARIO OPERATIVO</button>
-<button id="btn-bandeja-franja" class="btn-main" style="background:linear-gradient(135deg, #2980b9, #1f5f8b); box-shadow:0 4px 0 #154360; color:#fff;" onclick="abrirBandejaFranja()">Bandeja franja</button>
+<button id="btn-export" class="btn-main btn-view btn-export" onclick="exportarCSV()"> 4. EXPORTAR CSV</button>
+<button id="btn-diario" class="btn-main btn-view" onclick="abrirDiarioOperativo()"> 5. DIARIO OPERATIVO</button>
+<button id="btn-bandeja-franja" class="btn-main btn-view" onclick="abrirBandejaFranja()">Bandeja franja</button>
 </div>
 
 <div class="stats">
