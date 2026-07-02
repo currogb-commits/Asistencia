@@ -1984,6 +1984,53 @@ function existeIncidenciaDuplicada(pin, fecha, inicio, fin) {
     });
 }
 
+function crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, indiceLote) {
+    if (!ausencia) return { ok: false, motivo: 'Ausencia inválida', incidencia: null };
+
+    const pin = String(ausencia.pin || '').trim();
+    const empleado = String(ausencia.nombre || '').trim();
+    const fecha = g_diarioOperativo?.fecha || new Date().toISOString().slice(0, 10);
+    const horario = String(ausencia.horario || '').trim();
+    const tipoSeleccionado = String(tipo || '').trim();
+    const supervisorRegistra = String(supervisor || '').trim();
+    const obs = String(observaciones || '').trim();
+    const matchHorario = horario.match(/(\d{1,2}:\d{2})\s*[-\^]\s*(\d{1,2}:\d{2})/);
+    const inicio = matchHorario ? matchHorario[1].padStart(5, '0') : null;
+    const fin = matchHorario ? matchHorario[2].padStart(5, '0') : null;
+
+    if (!pin) return { ok: false, motivo: 'PIN inválido', incidencia: null };
+    if (!empleado) return { ok: false, motivo: 'Empleado inválido', incidencia: null };
+    if (!fecha) return { ok: false, motivo: 'Fecha inválida', incidencia: null };
+    if (!tipoSeleccionado) return { ok: false, motivo: 'Tipo de ausencia inválido', incidencia: null };
+    if (!inicio || !fin) return { ok: false, motivo: 'Sin horario válido', incidencia: null };
+    if (inicio >= fin) return { ok: false, motivo: 'Horario inválido', incidencia: null };
+    if (existeIncidenciaDuplicada(pin, fecha, inicio, fin)) {
+        return { ok: false, motivo: 'Duplicada', incidencia: null };
+    }
+
+    const indice = Number.isFinite(Number(indiceLote)) ? Number(indiceLote) : 0;
+    const pinSeguro = pin.replace(/[^a-zA-Z0-9_-]/g, '') || 'sinpin';
+    const id = `${Date.now()}-${indice}-${pinSeguro}-${Math.random().toString(36).slice(2, 8)}`;
+
+    return {
+        ok: true,
+        motivo: 'Se creará',
+        incidencia: {
+            id: id,
+            pin: pin,
+            empleado: empleado,
+            fecha: fecha,
+            hora_inicio: inicio,
+            hora_fin: fin,
+            turno_detectado: horario || null,
+            tipo: tipoSeleccionado,
+            supervisor_registra: supervisorRegistra,
+            observaciones: obs,
+            fecha_creacion: new Date().toISOString()
+        }
+    };
+}
+
 function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
     if (!pin || !fechaConsulta || !horaConsulta) return null;
     const incidencia = g_incidencias.find(inc => {
