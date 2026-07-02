@@ -127,6 +127,12 @@
 <div id="modalIncidencias" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--warning); width: 850px; max-width: 95vw;">
 <p class="modal-title"> Registro de Incidencias</p>
+<div id="inc-aviso-compartido" style="display:none; margin-bottom:12px; padding:10px 12px; border:1px solid var(--border); border-left:4px solid var(--warning); border-radius:8px; background:var(--card); color:var(--text); font-size:13px;">
+<div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+<span>Si trabajáis varios supervisores: importa el JSON compartido antes de registrar cambios y exporta al terminar.</span>
+<button class="btn-clear" type="button" onclick="cerrarAvisoIncidenciasCompartidas()">Cerrar</button>
+</div>
+</div>
 <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
 <button class="btn-clear" type="button" onclick="mostrarTabIncidencias('registro')">Registrar incidencia</button>
 <button class="btn-clear" type="button" onclick="mostrarTabIncidencias('historico')">Histórico</button>
@@ -334,6 +340,7 @@ let g_controlDiario = null;
 let g_mapaPlantillaControlDiario = null;
 let g_ausenciasSeleccionadas = new Set();
 let g_previewJustificacionMultiple = [];
+let g_avisoIncidenciasCompartidasMostrado = false;
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -2181,7 +2188,24 @@ function abrirModalIncidencias() {
     renderIncidencias();
     renderUltimaImportacionIncidencias();
     mostrarTabIncidencias('registro');
+    mostrarAvisoIncidenciasCompartidas();
     document.getElementById('modalIncidencias').style.display = 'flex';
+}
+
+function mostrarAvisoIncidenciasCompartidas() {
+    const aviso = document.getElementById('inc-aviso-compartido');
+    if (!aviso) return;
+    if (g_avisoIncidenciasCompartidasMostrado) {
+        aviso.style.display = 'none';
+        return;
+    }
+    aviso.style.display = 'block';
+    g_avisoIncidenciasCompartidasMostrado = true;
+}
+
+function cerrarAvisoIncidenciasCompartidas() {
+    const aviso = document.getElementById('inc-aviso-compartido');
+    if (aviso) aviso.style.display = 'none';
 }
 
 function mostrarTabIncidencias(tab) {
