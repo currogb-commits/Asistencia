@@ -106,34 +106,38 @@
 </div>
 
 <div id="modalPlantilla" class="modal-overlay">
-<div class="modal-content" style="border-top: 6px solid var(--primary); width: 780px; max-width: 95vw;">
-<p class="modal-title">Maestro de Plantilla Operativa</p>
-<div class="grid-2">
+<div class="modal-content" style="border-top: 6px solid var(--primary); width: 780px; max-width: 95vw; max-height: 90vh; overflow:hidden; display:flex; flex-direction:column; padding:18px;">
+<p class="modal-title" style="margin-bottom:10px;">Plantilla de empleados</p>
+<div id="plantilla-sync-info" style="margin-bottom:8px; padding:8px 10px; border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:8px; background:var(--card); color:var(--text); font-size:12px; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:3px 12px;"></div>
+<div class="grid-2" style="gap:8px 12px; margin-bottom:8px;">
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">PIN</label><input type="text" id="plantilla-pin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: 8830" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"></div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nombre</label><input type="text" id="plantilla-nombre" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Nombre completo"></div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Categoría</label><input type="text" id="plantilla-categoria" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: Operativo"></div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Observaciones</label><input type="text" id="plantilla-observaciones" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Notas internas"></div>
-<div style="grid-column: span 2; display:flex; align-items:center; gap: 10px;"><input type="checkbox" id="plantilla-activo" checked><label for="plantilla-activo" style="font-size:13px; color:var(--text);">Activo en plantilla</label></div>
+<div style="grid-column: span 2; display:flex; align-items:center; gap: 10px;"><input type="checkbox" id="plantilla-activo" checked><label for="plantilla-activo" style="font-size:13px; color:var(--text);">Activo en plantilla de empleados</label></div>
 </div>
 <input type="hidden" id="plantilla-id">
-<div style="display:flex; gap:10px; margin-top:15px; margin-bottom: 18px; flex-wrap: wrap;">
-<button class="btn-modal btn-modal-primary" onclick="guardarPlantilla()">GUARDAR MIEMBRO</button>
-<button class="btn-modal btn-modal-secondary" onclick="limpiarFormularioPlantilla()">Limpiar</button>
+<div style="display:flex; gap:8px; margin-top:8px; margin-bottom:10px; flex-wrap: wrap;">
+<input type="file" id="plantilla-sync-file" accept=".csv,text/csv,.txt" style="display:none" onchange="sincronizarPlantillaDesdeCSV(this.files[0]); this.value = ''">
+<button class="btn-modal btn-modal-primary" style="width:auto; padding:10px 12px; margin-top:0;" onclick="guardarPlantilla()">GUARDAR EMPLEADO</button>
+<button class="btn-modal btn-modal-primary" style="width:auto; padding:10px 12px; margin-top:0;" type="button" onclick="abrirSincronizarPlantilla()">🔄 Sincronizar plantilla</button>
+<button class="btn-modal btn-modal-secondary" style="width:auto; padding:10px 12px; margin-top:0;" onclick="limpiarFormularioPlantilla()">Limpiar</button>
 </div>
-<div style="margin-top:10px;">
-<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 12px;">
-<h3 style="font-size:14px; color:var(--text); margin:0;">Miembros de plantilla</h3>
-<input type="text" id="plantilla-buscar" class="search-box" placeholder="Buscar PIN, nombre, categoría..." oninput="renderPlantillaOperativa(this.value)">
+<div style="margin-top:0; flex:1; min-height:0; display:flex; flex-direction:column;">
+<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 8px;">
+<h3 style="font-size:14px; color:var(--text); margin:0;">Empleados</h3>
+<input type="text" id="plantilla-buscar" class="search-box" placeholder="Buscar PIN, empleado, categoría..." oninput="renderPlantillaOperativa(this.value)">
 </div>
-<div id="plantilla-list" style="display:grid; gap:12px;"></div>
+<div id="plantilla-contador" style="font-size:12px; color:var(--text-muted); margin-bottom:8px;"></div>
+<div id="plantilla-list" style="display:grid; gap:8px; overflow-y:auto; padding-right:4px; flex:1; min-height:0;"></div>
 </div>
-<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalPlantilla')">Cerrar</button>
+<button class="btn-modal btn-modal-secondary" style="margin-top:10px; flex:0 0 auto;" onclick="cerrarModal('modalPlantilla')">Cerrar</button>
 </div>
 </div>
 
 <!-- INCIDENCIAS v6 - INICIO -->
 <div id="modalIncidencias" class="modal-overlay">
-<div class="modal-content" style="border-top: 6px solid var(--warning); width: 850px; max-width: 95vw;">
+<div class="modal-content" style="border-top: 6px solid var(--warning); width: 900px; max-width: 95vw; max-height:90vh; overflow:hidden; display:flex; flex-direction:column;">
 <p class="modal-title"> Registro de Incidencias</p>
 <div id="inc-aviso-compartido" style="display:none; margin-bottom:12px; padding:10px 12px; border:1px solid var(--border); border-left:4px solid var(--warning); border-radius:8px; background:var(--card); color:var(--text); font-size:13px;">
 <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
@@ -143,10 +147,10 @@
 </div>
 <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
 <button class="btn-clear" type="button" onclick="mostrarTabIncidencias('registro')">Registrar incidencia</button>
-<button class="btn-clear" type="button" onclick="mostrarTabIncidencias('historico')">Histórico</button>
+<button class="btn-clear" type="button" onclick="mostrarTabIncidencias('historico')">Centro de incidencias</button>
 <button class="btn-clear" type="button" onclick="mostrarTabIncidencias('tipos')">Tipos de ausencia</button>
 </div>
-<div id="inc-tab-registro">
+<div id="inc-tab-registro" style="flex:1; min-height:0; overflow-y:auto; padding-right:4px;">
 <div class="grid-2">
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">PIN</label><input type="text" id="inc-pin" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Ej: 8830"></div>
 <div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Empleado</label><input type="text" id="inc-empleado" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" placeholder="Nombre completo"></div>
@@ -178,7 +182,7 @@
 <button class="btn-modal btn-modal-secondary" onclick="limpiarFormularioIncidencia()">Cancelar</button>
 </div>
 </div>
-<div id="inc-tab-tipos" style="display:none; margin-top: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;">
+<div id="inc-tab-tipos" style="display:none; flex:1; min-height:0; overflow-y:auto; margin-top: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipos de ausencia</span>
         <button class="btn-clear" type="button" onclick="cancelarEdicionTipo();">Tipos</button>
@@ -195,22 +199,32 @@
     </div>
     <div id="tipo-ausencia-error" style="font-size:12px; color:#d23; margin-top:8px;"></div>
 </div>
-<div id="inc-tab-historico" style="display:none;">
-<div style="margin-bottom:10px; padding:10px 12px; border:1px solid var(--border); border-left:4px solid var(--warning); border-radius:8px; background:var(--card); color:var(--text); font-size:13px;">
+<div id="inc-tab-historico" style="display:none; flex:1; min-height:0; flex-direction:column;">
+<div style="margin-bottom:10px; padding:10px 12px; border:1px solid var(--border); border-left:4px solid var(--warning); border-radius:8px; background:var(--card); color:var(--text); font-size:13px; flex:0 0 auto;">
 <b>Modo local:</b> importa incidencias antes de empezar y exporta al terminar.
 <div id="inc-ultima-importacion" style="margin-top:4px; color:var(--text-muted); font-size:12px;">Última importación: sin registrar</div>
 </div>
-<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-<h3 style="font-size:14px; color:var(--text); margin:0;">Histórico de Incidencias</h3>
-<div style="display:flex; gap:8px;">
+<div style="display:flex; justify-content: space-between; align-items: center; gap:10px; margin-bottom:10px; flex:0 0 auto; flex-wrap:wrap;">
+<h3 style="font-size:14px; color:var(--text); margin:0;">Centro de incidencias</h3>
+<div style="display:flex; gap:8px; flex-wrap:wrap;">
 <input type="file" id="inc-import-file" accept=".json,application/json" style="display:none" onchange="importarIncidencias(this.files[0]); this.value = ''">
 <button class="btn-clear" type="button" onclick="abrirImportarIncidencias()">📥 Importar</button>
 <button class="btn-clear" type="button" onclick="exportarIncidencias()">📤 Exportar</button>
 </div>
 </div>
-<div id="agenda-incidencias" class="agenda-wrap" style="max-height:52vh; overflow-y:auto; padding-right:4px;"></div>
+<div style="display:grid; grid-template-columns: minmax(180px, 1.2fr) minmax(130px, 0.8fr) minmax(280px, 1.4fr) minmax(130px, 0.8fr); gap:8px; align-items:end; margin-bottom:8px; flex:0 0 auto;">
+<div><label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Buscar:</label><input type="text" id="inc-filtro-buscar" class="search-box" style="width:100%;" placeholder="PIN, empleado, tipo..." oninput="renderIncidencias()"></div>
+<div><label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipo:</label><select id="inc-filtro-tipo" style="width:100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" onchange="renderIncidencias()"><option value="">Todos</option></select></div>
+<div><label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Fecha:</label><div style="display:flex; gap:6px; flex-wrap:wrap;"><button class="btn-clear" type="button" onclick="setFiltroFechaIncidencias('hoy')">Hoy</button><button class="btn-clear" type="button" onclick="setFiltroFechaIncidencias('futuras')">Futuras</button><button class="btn-clear" type="button" onclick="setFiltroFechaIncidencias('activas')">Activas</button><button class="btn-clear" type="button" onclick="setFiltroFechaIncidencias('todas')">Todas</button></div></div>
+<div><label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Supervisor:</label><select id="inc-filtro-supervisor" style="width:100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px;" onchange="renderIncidencias()"><option value="">Todos</option></select></div>
 </div>
-<button class="btn-modal btn-modal-secondary" style="margin-top:16px;" onclick="cerrarModal('modalIncidencias')">Cerrar</button>
+<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex:0 0 auto; flex-wrap:wrap;">
+<div id="inc-contador" style="font-size:12px; color:var(--text-muted);">Mostrando 0 de 0 incidencias</div>
+<button class="btn-clear" type="button" onclick="verHistoricoCompletoIncidencias()">Ver histórico completo</button>
+</div>
+<div id="agenda-incidencias" class="agenda-wrap" style="overflow-y:auto; padding-right:4px; flex:1; min-height:0;"></div>
+</div>
+<button class="btn-modal btn-modal-secondary" style="margin-top:16px; flex:0 0 auto;" onclick="cerrarModal('modalIncidencias')">Cerrar</button>
 </div>
 </div>
 <!-- INCIDENCIAS v6 - FIN -->
@@ -234,7 +248,7 @@
 <!-- INCIDENCIAS v6 - INICIO -->
 <button class="btn-top" onclick="abrirModalIncidencias()"> 📝 Incidencias</button>
 <button class="btn-top" onclick="abrirModalControlDiario()"> 📄 Control Diario</button>
-<button class="btn-top" onclick="abrirModalPlantilla()"> 📋 Plantilla</button>
+<button class="btn-top" onclick="abrirModalPlantilla()"> 📋 Plantilla de empleados</button>
 <!-- INCIDENCIAS v6 - FIN -->
 <button class="btn-top" onclick="abrirModalSup()"> SUP</button>
 <button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
@@ -350,6 +364,7 @@ let g_mapaPlantillaControlDiario = null;
 let g_ausenciasSeleccionadas = new Set();
 let g_previewJustificacionMultiple = [];
 let g_avisoIncidenciasCompartidasMostrado = false;
+let g_filtroFechaIncidencias = 'activas';
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -572,10 +587,12 @@ function construirDetalleAusenciasOperacionPorFranja(fecha) {
 
 function incidenciaActivaEnFranja(inc, franja, fecha) {
     if (!inc || inc.fecha !== fecha) return false;
-    if (!inc.hora_inicio || !inc.hora_fin) return true;
+    if (!inc.hora_inicio && !inc.hora_fin) return true;
     const slotInicio = horaAMinutos(franja);
     const slotFin = slotInicio + 30;
     const minInicio = horaAMinutos(inc.hora_inicio);
+    if (inc.hora_inicio && !inc.hora_fin) return slotFin > minInicio;
+    if (!inc.hora_inicio && inc.hora_fin) return slotInicio < horaAMinutos(inc.hora_fin);
     const minFin = horaAMinutos(inc.hora_fin);
     return minFin > slotInicio && minInicio < slotFin;
 }
@@ -684,10 +701,138 @@ function generarControlDiario() {
     };
 }
 
+function obtenerMetaSincronizacionPlantilla() {
+    try {
+        return JSON.parse(localStorage.getItem('wfm_personal_maestro_sync') || '{}');
+    } catch (e) {
+        return {};
+    }
+}
+
+function guardarMetaSincronizacionPlantilla(meta) {
+    localStorage.setItem('wfm_personal_maestro_sync', JSON.stringify(meta || {}));
+}
+
+function renderInfoSincronizacionPlantilla() {
+    const cont = document.getElementById('plantilla-sync-info');
+    if (!cont) return;
+    const meta = obtenerMetaSincronizacionPlantilla();
+    cont.innerHTML = `
+        <div><b>Plantilla de empleados</b></div>
+        <div><b>Total empleados:</b> ${escapeHTML(String(g_personalMaestro.length))}</div>
+        <div><b>Última sincronización:</b> ${escapeHTML(meta.fecha || 'Sin sincronizar')}</div>
+        <div><b>Archivo sincronizado:</b> ${escapeHTML(meta.archivo || '-')}</div>
+    `;
+}
+
 function abrirModalPlantilla() {
     renderPlantillaOperativa();
+    renderInfoSincronizacionPlantilla();
     limpiarFormularioPlantilla();
     document.getElementById('modalPlantilla').style.display = 'flex';
+}
+
+function abrirSincronizarPlantilla() {
+    const input = document.getElementById('plantilla-sync-file');
+    if (!input) {
+        mostrarToast('No se encontró el selector de archivo.');
+        return;
+    }
+    input.click();
+}
+
+function detectarSeparadorPlantilla(linea) {
+    if (linea.includes('\t')) return '\t';
+    if (linea.includes(';')) return ';';
+    if (linea.includes('|')) return '|';
+    return ',';
+}
+
+function parsearLineaCSVPlantilla(linea, separador) {
+    const celdas = [];
+    let actual = '';
+    let enComillas = false;
+    for (let i = 0; i < linea.length; i++) {
+        const ch = linea[i];
+        if (ch === '"') {
+            if (enComillas && linea[i + 1] === '"') {
+                actual += '"';
+                i++;
+            } else {
+                enComillas = !enComillas;
+            }
+        } else if (ch === separador && !enComillas) {
+            celdas.push(actual.trim());
+            actual = '';
+        } else {
+            actual += ch;
+        }
+    }
+    celdas.push(actual.trim());
+    return celdas;
+}
+
+function normalizarPinPlantilla(pin) {
+    return String(pin || '').trim().replace(/\D/g, '').replace(/^0+/, '');
+}
+
+function extraerEmpleadoCSVPlantilla(celdas, separador) {
+    return { nombre: String(celdas[0] || '').trim(), pin: normalizarPinPlantilla(celdas[1]) };
+}
+
+function sincronizarPlantillaDesdeCSV(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        const texto = String(reader.result || '').replace(/^\uFEFF/, '');
+        const lineas = texto.split(/\r?\n/).map(linea => linea.trim()).filter(Boolean);
+        if (lineas.length <= 1) {
+            mostrarToast('El archivo no contiene empleados para sincronizar.');
+            return;
+        }
+
+        const separador = detectarSeparadorPlantilla(lineas[0]);
+        const empleados = [];
+        let pinValidos = 0;
+        let pinInvalidos = 0;
+
+        lineas.slice(1).forEach(linea => {
+            const celdas = parsearLineaCSVPlantilla(linea, separador);
+            const empleado = extraerEmpleadoCSVPlantilla(celdas, separador);
+            if (!empleado.nombre || empleado.pin.length < 3 || empleado.pin.length > 6) {
+                pinInvalidos++;
+                return;
+            }
+            pinValidos++;
+            empleados.push({
+                pin: empleado.pin,
+                nombre: empleado.nombre,
+                categoria: 'Empleado',
+                activo: true,
+                observaciones: ''
+            });
+        });
+
+        const resumen = `Plantilla detectada\n\nEmpleados encontrados: ${empleados.length}\nPIN válidos: ${pinValidos}\nPIN inválidos: ${pinInvalidos}\n\n¿Deseas sincronizar la plantilla?`;
+        if (!confirm(resumen)) {
+            mostrarToast('Sincronización cancelada');
+            return;
+        }
+
+        g_personalMaestro = empleados;
+        guardarPersonalMaestro();
+        guardarMetaSincronizacionPlantilla({
+            fecha: new Date().toLocaleString('es-ES'),
+            empleados: empleados.length,
+            archivo: file.name || 'Archivo CSV'
+        });
+        renderPlantillaOperativa();
+        renderInfoSincronizacionPlantilla();
+        limpiarFormularioPlantilla();
+        mostrarToast(`Plantilla de empleados sincronizada: ${empleados.length} empleados.`);
+    };
+    reader.onerror = () => mostrarToast('No se pudo leer el archivo de plantilla de empleados.');
+    reader.readAsText(file);
 }
 
 function limpiarFormularioPlantilla() {
@@ -717,11 +862,11 @@ function guardarPlantilla() {
     }
     if (originalPin && originalPin !== pin) {
         if (g_personalMaestro.some(p => p.pin === pin)) {
-            mostrarToast('⚠️ Ya existe otro miembro con ese PIN');
+            mostrarToast('⚠️ Ya existe otro empleado con ese PIN');
             return;
         }
         if (g_incidencias.some(inc => inc.pin === originalPin)) {
-            mostrarToast('⚠️ No se puede cambiar el PIN: este miembro tiene incidencias existentes');
+            mostrarToast('⚠️ No se puede cambiar el PIN: este empleado tiene incidencias existentes');
             return;
         }
     }
@@ -729,7 +874,7 @@ function guardarPlantilla() {
     if (originalPin) {
         const idx = g_personalMaestro.findIndex(p => p.pin === originalPin);
         if (idx === -1) {
-            mostrarToast('⚠️ No se encontró el miembro original');
+            mostrarToast('⚠️ No se encontró el empleado original');
             return;
         }
         g_personalMaestro[idx] = {
@@ -739,14 +884,14 @@ function guardarPlantilla() {
             activo,
             observaciones
         };
-        mostrarToast('✅ Miembro actualizado');
+        mostrarToast('✅ Empleado actualizado');
     } else {
         if (g_personalMaestro.some(p => p.pin === pin)) {
-            mostrarToast('⚠️ Ya existe un miembro con ese PIN');
+            mostrarToast('⚠️ Ya existe un empleado con ese PIN');
             return;
         }
         g_personalMaestro.push({ pin, nombre, categoria, activo, observaciones });
-        mostrarToast('✅ Miembro añadido');
+        mostrarToast('✅ Empleado añadido');
     }
     guardarPersonalMaestro();
     renderPlantillaOperativa();
@@ -755,8 +900,10 @@ function guardarPlantilla() {
 
 function renderPlantillaOperativa(query) {
     const cont = document.getElementById('plantilla-list');
+    const contador = document.getElementById('plantilla-contador');
     if (!cont) return;
     const q = String(query || '').toLowerCase().trim();
+    const total = g_personalMaestro.length;
     const items = g_personalMaestro
         .filter(persona => {
             if (!q) return true;
@@ -767,13 +914,20 @@ function renderPlantillaOperativa(query) {
             const cmp = a.nombre.localeCompare(b.nombre, 'es');
             return cmp !== 0 ? cmp : a.pin.localeCompare(b.pin, 'es');
         });
+    const visibles = q ? items : items.slice(0, 50);
+
+    if (contador) {
+        contador.innerText = !q && items.length > 50
+            ? `Mostrando 50 de ${total}. Usa el buscador para afinar.`
+            : `Mostrando ${visibles.length} de ${total}`;
+    }
 
     if (!items.length) {
-        cont.innerHTML = '<div class="agenda-empty">No hay miembros que coincidan con la búsqueda</div>';
+        cont.innerHTML = '<div class="agenda-empty">No hay empleados que coincidan con la búsqueda</div>';
         return;
     }
 
-    cont.innerHTML = items.map(persona => {
+    cont.innerHTML = visibles.map(persona => {
         const estado = persona.activo ? 'Activo' : 'Inactivo';
         const estadoClass = persona.activo ? 'bg-ok' : 'bg-gray';
         const observ = persona.observaciones ? `<div style="font-size:12px; color:var(--text-muted);">${escapeHTML(persona.observaciones)}</div>` : '';
@@ -820,11 +974,11 @@ function eliminarPlantilla(pin) {
         mostrarToast('⚠️ No se puede eliminar: existen incidencias para este PIN. Desactívalo en su lugar.');
         return;
     }
-    if (!confirm('¿Eliminar este miembro de la plantilla de forma permanente?')) return;
+    if (!confirm('¿Eliminar este empleado de la plantilla de empleados de forma permanente?')) return;
     g_personalMaestro = g_personalMaestro.filter(p => p.pin !== persona.pin);
     guardarPersonalMaestro();
     renderPlantillaOperativa(document.getElementById('plantilla-buscar')?.value || '');
-    mostrarToast('🗑️ Miembro eliminado');
+    mostrarToast('🗑️ Empleado eliminado');
 }
 
 
@@ -1384,6 +1538,36 @@ return Array.from(g_ausenciasSeleccionadas)
     .filter(Boolean);
 }
 
+function extraerHorasAusenciaPreview(ausencia) {
+const match = String(ausencia?.horario || '').match(/(\d{1,2}:\d{2})\s*[-\^]\s*(\d{1,2}:\d{2})/);
+return match
+    ? { inicio: normalizarHoraCruce(match[1]), fin: normalizarHoraCruce(match[2]) }
+    : { inicio: '', fin: '' };
+}
+
+function obtenerHorasEditadasPreview() {
+const horas = {};
+document.querySelectorAll('#preview-justificacion-lista input[data-preview-pin]').forEach(input => {
+    const pin = input.getAttribute('data-preview-pin');
+    const campo = input.getAttribute('data-preview-campo');
+    if (!pin || !campo) return;
+    if (!horas[pin]) horas[pin] = {};
+    horas[pin][campo] = input.value;
+});
+return horas;
+}
+
+function obtenerHorasFilaPreview(ausencia, horasEditadas) {
+const pin = String(ausencia?.pin || '');
+if (horasEditadas && horasEditadas[pin]) {
+    return {
+        inicio: horasEditadas[pin].inicio || '',
+        fin: horasEditadas[pin].fin || ''
+    };
+}
+return extraerHorasAusenciaPreview(ausencia);
+}
+
 function abrirPreviewJustificacionMultiple() {
 if (g_ausenciasSeleccionadas.size === 0) {
     mostrarToast('Selecciona al menos una ausencia.');
@@ -1402,6 +1586,7 @@ const tipo = document.getElementById('preview-tipo-ausencia')?.value || '';
 const supervisor = document.getElementById('preview-supervisor')?.value || '';
 const observaciones = document.getElementById('preview-observaciones')?.value || '';
 const ausencias = obtenerAusenciasSeleccionadasParaPreview();
+const horasEditadas = obtenerHorasEditadasPreview();
 g_previewJustificacionMultiple = [];
 
 if (ausencias.length === 0) {
@@ -1410,13 +1595,17 @@ if (ausencias.length === 0) {
     return;
 }
 
-let html = '<table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="background:var(--bg); color:var(--text-muted); text-align:left;"><th style="padding:10px; border-bottom:1px solid var(--border);">Empleado</th><th style="padding:10px; border-bottom:1px solid var(--border);">Horario</th><th style="padding:10px; border-bottom:1px solid var(--border);">Resultado</th></tr></thead><tbody>';
+let html = '<table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="background:var(--bg); color:var(--text-muted); text-align:left;"><th style="padding:10px; border-bottom:1px solid var(--border);">Empleado</th><th style="padding:10px; border-bottom:1px solid var(--border);">Horario de turno</th><th style="padding:10px; border-bottom:1px solid var(--border);">Hora inicio</th><th style="padding:10px; border-bottom:1px solid var(--border);">Hora fin</th><th style="padding:10px; border-bottom:1px solid var(--border);">Resultado</th></tr></thead><tbody>';
 ausencias.forEach((ausencia, index) => {
-    const preview = crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, index);
+    const horas = obtenerHorasFilaPreview(ausencia, horasEditadas);
+    const preview = crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, index, horas.inicio, horas.fin);
     g_previewJustificacionMultiple.push({ ausencia, preview });
     const resultado = preview.ok ? 'Se creará' : (preview.motivo === 'Duplicada' ? 'Duplicada' : 'Error');
     const detalle = !preview.ok && preview.motivo && preview.motivo !== resultado ? ` (${preview.motivo})` : '';
-    html += `<tr><td style="padding:10px; border-bottom:1px solid var(--border);"><b>${escapeHTML(ausencia.nombre || '')}</b><br><span style="color:var(--text-muted); font-size:12px;">${escapeHTML(ausencia.pin || '')}</span></td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(ausencia.horario || '')}</td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(resultado + detalle)}</td></tr>`;
+    const finPendiente = preview?.ok && preview?.incidencia?.hora_inicio && !preview?.incidencia?.hora_fin
+        ? '<div style="font-size:11px; color:var(--text-muted); margin-top:3px;">fin pendiente</div>'
+        : '';
+    html += `<tr><td style="padding:10px; border-bottom:1px solid var(--border);"><b>${escapeHTML(ausencia.nombre || '')}</b><br><span style="color:var(--text-muted); font-size:12px;">${escapeHTML(ausencia.pin || '')}</span></td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(ausencia.horario || '')}</td><td style="padding:10px; border-bottom:1px solid var(--border);"><input type="time" data-preview-pin="${escapeHTML(ausencia.pin || '')}" data-preview-campo="inicio" value="${escapeHTML(horas.inicio || '')}" onchange="renderPreviewJustificacionMultiple()" style="width:100%; padding:6px 8px; border:1px solid var(--input-border); border-radius:6px; background:var(--input-bg); color:var(--text);"></td><td style="padding:10px; border-bottom:1px solid var(--border);"><input type="time" data-preview-pin="${escapeHTML(ausencia.pin || '')}" data-preview-campo="fin" value="${escapeHTML(horas.fin || '')}" onchange="renderPreviewJustificacionMultiple()" style="width:100%; padding:6px 8px; border:1px solid var(--input-border); border-radius:6px; background:var(--input-bg); color:var(--text);">${finPendiente}</td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(resultado + detalle)}</td></tr>`;
 });
 html += '</tbody></table>';
 cont.innerHTML = html;
@@ -1424,13 +1613,58 @@ if (btnConfirmar) btnConfirmar.disabled = !g_previewJustificacionMultiple.some(i
 }
 
 function confirmarGuardadoJustificacionMultiple() {
-const validas = g_previewJustificacionMultiple
-    .map(item => item.preview)
-    .filter(preview => preview && preview.ok && preview.incidencia);
-const omitidas = g_previewJustificacionMultiple.length - validas.length;
+const tipo = document.getElementById('preview-tipo-ausencia')?.value || '';
+const supervisor = document.getElementById('preview-supervisor')?.value || '';
+const observaciones = document.getElementById('preview-observaciones')?.value || '';
+const ausencias = obtenerAusenciasSeleccionadasParaPreview();
+const horasEditadas = obtenerHorasEditadasPreview();
+const validas = [];
+let duplicadas = 0;
+let errores = 0;
+
+g_previewJustificacionMultiple = [];
+ausencias.forEach((ausencia, index) => {
+    const horas = obtenerHorasFilaPreview(ausencia, horasEditadas);
+    const preview = crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, index, horas.inicio, horas.fin);
+    if (!preview || !preview.ok || !preview.incidencia) {
+        if (preview && preview.motivo === 'Duplicada') duplicadas++;
+        else errores++;
+        g_previewJustificacionMultiple.push({ ausencia, preview });
+        return;
+    }
+
+    const inc = preview.incidencia;
+    const duplicadaEnLote = validas.some(item => {
+        const existente = item.incidencia;
+        if (!existente || existente.pin !== inc.pin || existente.fecha !== inc.fecha) return false;
+        if ((!existente.hora_inicio && !existente.hora_fin) || (!inc.hora_inicio && !inc.hora_fin)) return true;
+        if (existente.hora_inicio && existente.hora_fin && inc.hora_inicio && inc.hora_fin) {
+            return existente.hora_fin > inc.hora_inicio && existente.hora_inicio < inc.hora_fin;
+        }
+        if (existente.hora_inicio && !existente.hora_fin && inc.hora_inicio && inc.hora_fin) {
+            return inc.hora_fin > existente.hora_inicio;
+        }
+        if (existente.hora_inicio && existente.hora_fin && inc.hora_inicio && !inc.hora_fin) {
+            return existente.hora_fin > inc.hora_inicio;
+        }
+        if (existente.hora_inicio && !existente.hora_fin && inc.hora_inicio && !inc.hora_fin) {
+            return true;
+        }
+        return false;
+    });
+
+    if (duplicadaEnLote) {
+        duplicadas++;
+        g_previewJustificacionMultiple.push({ ausencia, preview: { ok: false, motivo: 'Duplicada', incidencia: null } });
+        return;
+    }
+
+    validas.push(preview);
+    g_previewJustificacionMultiple.push({ ausencia, preview });
+});
 
 if (validas.length === 0) {
-    mostrarToast('No hay incidencias válidas para guardar.');
+    mostrarToast(`No hay incidencias válidas para guardar: creadas 0, duplicadas ${duplicadas}, errores ${errores}.`);
     return;
 }
 
@@ -1442,7 +1676,7 @@ renderIncidencias();
 limpiarSeleccionAusencias();
 g_previewJustificacionMultiple = [];
 cerrarModal('modalPreviewJustificacion');
-mostrarToast(`Justificación múltiple guardada: creadas ${validas.length}, omitidas ${omitidas}. Vuelve a cruzar para actualizar tabla, WhatsApp y Control Diario.`);
+mostrarToast(`Justificación múltiple guardada: creadas ${validas.length}, duplicadas ${duplicadas}, errores ${errores}. Vuelve a cruzar para actualizar tabla, WhatsApp y Control Diario.`);
 }
 
 function renderResumenAusenciasOperativo(mostrar) {
@@ -2201,6 +2435,7 @@ function existeIncidenciaDuplicada(pin, fecha, inicio, fin) {
     if (!pin || !fecha || !Array.isArray(g_incidencias)) return false;
 
     const tieneInicioFin = Boolean(inicio && fin);
+    const tieneSoloInicio = Boolean(inicio && !fin);
     const esDiaCompleto = !inicio && !fin;
 
     return g_incidencias.some(inc => {
@@ -2212,12 +2447,21 @@ function existeIncidenciaDuplicada(pin, fecha, inicio, fin) {
         if (tieneInicioFin && inc.hora_inicio && inc.hora_fin) {
             return inc.hora_fin > inicio && inc.hora_inicio < fin;
         }
+        if (tieneInicioFin && inc.hora_inicio && !inc.hora_fin) {
+            return fin > inc.hora_inicio;
+        }
+        if (tieneSoloInicio && inc.hora_inicio && inc.hora_fin) {
+            return inc.hora_fin > inicio;
+        }
+        if (tieneSoloInicio && inc.hora_inicio && !inc.hora_fin) {
+            return true;
+        }
 
         return false;
     });
 }
 
-function crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, indiceLote) {
+function crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, indiceLote, inicioManual, finManual) {
     if (!ausencia) return { ok: false, motivo: 'Ausencia inválida', incidencia: null };
 
     const pin = String(ausencia.pin || '').trim();
@@ -2227,16 +2471,23 @@ function crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones,
     const tipoSeleccionado = String(tipo || '').trim();
     const supervisorRegistra = String(supervisor || '').trim();
     const obs = String(observaciones || '').trim();
+    const inicioManualNormalizado = String(inicioManual || '').trim() ? normalizarHoraCruce(inicioManual) : null;
+    const finManualNormalizado = String(finManual || '').trim() ? normalizarHoraCruce(finManual) : null;
     const matchHorario = horario.match(/(\d{1,2}:\d{2})\s*[-\^]\s*(\d{1,2}:\d{2})/);
-    const inicio = matchHorario ? matchHorario[1].padStart(5, '0') : null;
-    const fin = matchHorario ? matchHorario[2].padStart(5, '0') : null;
+    const usaManual = Boolean(inicioManualNormalizado || finManualNormalizado);
+    const inicio = usaManual
+        ? inicioManualNormalizado
+        : (matchHorario ? normalizarHoraCruce(matchHorario[1]) : null);
+    const fin = usaManual
+        ? finManualNormalizado
+        : (matchHorario ? normalizarHoraCruce(matchHorario[2]) : null);
 
     if (!pin) return { ok: false, motivo: 'PIN inválido', incidencia: null };
     if (!empleado) return { ok: false, motivo: 'Empleado inválido', incidencia: null };
     if (!fecha) return { ok: false, motivo: 'Fecha inválida', incidencia: null };
     if (!tipoSeleccionado) return { ok: false, motivo: 'Tipo de ausencia inválido', incidencia: null };
-    if (!inicio || !fin) return { ok: false, motivo: 'Sin horario válido', incidencia: null };
-    if (inicio >= fin) return { ok: false, motivo: 'Horario inválido', incidencia: null };
+    if (!inicio) return { ok: false, motivo: 'Sin hora inicio válida', incidencia: null };
+    if (fin && inicio >= fin) return { ok: false, motivo: 'Horario inválido', incidencia: null };
     if (existeIncidenciaDuplicada(pin, fecha, inicio, fin)) {
         return { ok: false, motivo: 'Duplicada', incidencia: null };
     }
@@ -2254,7 +2505,7 @@ function crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones,
             empleado: empleado,
             fecha: fecha,
             hora_inicio: inicio,
-            hora_fin: fin,
+            hora_fin: fin || '',
             turno_detectado: horario || null,
             tipo: tipoSeleccionado,
             supervisor_registra: supervisorRegistra,
@@ -2273,6 +2524,12 @@ function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
         if (inc.hora_inicio && inc.hora_fin) {
             return horaConsulta >= inc.hora_inicio && horaConsulta < inc.hora_fin;
         }
+        if (inc.hora_inicio && !inc.hora_fin) {
+            return horaConsulta >= inc.hora_inicio;
+        }
+        if (!inc.hora_inicio && inc.hora_fin) {
+            return horaConsulta < inc.hora_fin;
+        }
         return false;
     });
     return incidencia || null;
@@ -2280,7 +2537,9 @@ function buscarIncidenciaActiva(pin, fechaConsulta, horaConsulta) {
 
 function formatearIncidenciaParaEstado(inc) {
     if (!inc) return '';
-    const horario = inc.hora_inicio && inc.hora_fin ? `${inc.hora_inicio}-${inc.hora_fin}` : 'Día completo';
+    const horario = inc.hora_inicio && inc.hora_fin
+        ? `${inc.hora_inicio}-${inc.hora_fin}`
+        : (inc.hora_inicio ? `${inc.hora_inicio}-fin pendiente` : 'Día completo');
     return `AUSENCIA JUSTIFICADA - ${inc.tipo} ${horario}`;
 }
 
@@ -2325,9 +2584,13 @@ function mostrarTabIncidencias(tab) {
         tipos: document.getElementById('inc-tab-tipos')
     };
     Object.keys(tabs).forEach(key => {
-        if (tabs[key]) tabs[key].style.display = key === tab ? 'block' : 'none';
+        if (tabs[key]) tabs[key].style.display = key === tab ? (key === 'historico' ? 'flex' : 'block') : 'none';
     });
-    if (tab === 'historico') renderUltimaImportacionIncidencias();
+    if (tab === 'historico') {
+        poblarFiltrosCentroIncidencias();
+        renderUltimaImportacionIncidencias();
+        renderIncidencias();
+    }
 }
 
 function abrirJustificacionAusencia(pin) {
@@ -2554,7 +2817,7 @@ function obtenerEstadoIncidencia(inc, fechaActual, horaActual) {
     return 'ACTIVA_AHORA';
 }
 
-function clasificarIncidenciasAgenda(fechaActual, horaActual) {
+function clasificarIncidenciasAgenda(fechaActual, horaActual, incidencias = g_incidencias) {
     const grupos = {
         activasAhora: [],
         proximasHoy: [],
@@ -2563,10 +2826,12 @@ function clasificarIncidenciasAgenda(fechaActual, horaActual) {
         pasadas: []
     };
 
-    g_incidencias.forEach(inc => {
+    incidencias.forEach(inc => {
         const estado = obtenerEstadoIncidencia(inc, fechaActual, horaActual);
         const codigo = obtenerCodigoAusencia(inc.tipo);
-        const horario = (inc.hora_inicio && inc.hora_fin) ? `${inc.hora_inicio} - ${inc.hora_fin}` : 'Día completo';
+        const horario = (inc.hora_inicio && inc.hora_fin)
+            ? `${inc.hora_inicio} - ${inc.hora_fin}`
+            : (inc.hora_inicio ? `${inc.hora_inicio} - fin pendiente` : 'Día completo');
         const item = { ...inc, codigo, horario, estado };
 
         if (estado === 'ACTIVA_AHORA') grupos.activasAhora.push(item);
@@ -2579,13 +2844,69 @@ function clasificarIncidenciasAgenda(fechaActual, horaActual) {
     return grupos;
 }
 
+function poblarFiltrosCentroIncidencias() {
+    const selectTipo = document.getElementById('inc-filtro-tipo');
+    const selectSupervisor = document.getElementById('inc-filtro-supervisor');
+    const optionHTML = valor => `<option value="${escapeHTML(String(valor)).replace(/"/g, '&quot;')}">${escapeHTML(String(valor))}</option>`;
+    if (selectTipo) {
+        const valorTipo = selectTipo.value;
+        const tipos = Array.from(new Set([
+            ...g_tiposAusencia.map(item => item.tipo).filter(Boolean),
+            ...g_incidencias.map(inc => inc.tipo).filter(Boolean)
+        ])).sort((a, b) => a.localeCompare(b, 'es'));
+        selectTipo.innerHTML = '<option value="">Todos</option>' + tipos.map(optionHTML).join('');
+        selectTipo.value = tipos.includes(valorTipo) ? valorTipo : '';
+    }
+    if (selectSupervisor) {
+        const valorSupervisor = selectSupervisor.value;
+        const supervisores = Array.from(new Set(g_incidencias.map(inc => inc.supervisor_registra).filter(Boolean)))
+            .sort((a, b) => a.localeCompare(b, 'es'));
+        selectSupervisor.innerHTML = '<option value="">Todos</option>' + supervisores.map(optionHTML).join('');
+        selectSupervisor.value = supervisores.includes(valorSupervisor) ? valorSupervisor : '';
+    }
+}
+
+function setFiltroFechaIncidencias(filtro) {
+    g_filtroFechaIncidencias = filtro || 'activas';
+    renderIncidencias();
+}
+
+function verHistoricoCompletoIncidencias() {
+    setFiltroFechaIncidencias('todas');
+}
+
+function incidenciaCumpleFiltroFechaCentro(inc, fechaActual) {
+    const filtro = g_filtroFechaIncidencias || 'activas';
+    if (filtro === 'todas') return true;
+    if (filtro === 'hoy') return inc.fecha === fechaActual;
+    if (filtro === 'futuras') return inc.fecha > fechaActual;
+    return inc.fecha === fechaActual || inc.fecha > fechaActual || !inc.hora_fin;
+}
+
+function incidenciaCumpleFiltrosCentro(inc, fechaActual) {
+    const q = String(document.getElementById('inc-filtro-buscar')?.value || '').toLowerCase().trim();
+    const tipo = document.getElementById('inc-filtro-tipo')?.value || '';
+    const supervisor = document.getElementById('inc-filtro-supervisor')?.value || '';
+    if (!incidenciaCumpleFiltroFechaCentro(inc, fechaActual)) return false;
+    if (tipo && inc.tipo !== tipo) return false;
+    if (supervisor && inc.supervisor_registra !== supervisor) return false;
+    if (!q) return true;
+    return String(inc.pin || '').toLowerCase().includes(q)
+        || String(inc.empleado || '').toLowerCase().includes(q)
+        || String(inc.tipo || '').toLowerCase().includes(q);
+}
+
 function renderIncidencias() {
     const wrapper = document.getElementById('agenda-incidencias');
     if (!wrapper) return;
+    poblarFiltrosCentroIncidencias();
 
     const fechaActual = new Date().toISOString().slice(0, 10);
     const horaActual = new Date().toTimeString().slice(0, 5);
-    const agenda = clasificarIncidenciasAgenda(fechaActual, horaActual);
+    const incidenciasFiltradas = g_incidencias.filter(inc => incidenciaCumpleFiltrosCentro(inc, fechaActual));
+    const agenda = clasificarIncidenciasAgenda(fechaActual, horaActual, incidenciasFiltradas);
+    const contador = document.getElementById('inc-contador');
+    if (contador) contador.innerText = `Mostrando ${incidenciasFiltradas.length} de ${g_incidencias.length} incidencias`;
 
     const secciones = [
         { key: 'activasAhora', title: 'Activas ahora', headerClass: 'agenda-seccion__header--success', cardClass: 'incidencia-card--activa' },
