@@ -47,6 +47,20 @@
 <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalOcup')">Cerrar</button>
 </div>
 </div>
+<div id="modalPreviewJustificacion" class="modal-overlay">
+<div class="modal-content" style="border-top: 6px solid var(--warning); width: 850px; max-width: 95vw;">
+<p class="modal-title">Vista previa de justificación múltiple</p>
+<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Revisa las incidencias preparadas. En esta fase no se guardan cambios.</p>
+<div class="grid-2">
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tipo de ausencia</label><select id="preview-tipo-ausencia" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; cursor: pointer;" onchange="renderPreviewJustificacionMultiple()"></select></div>
+<div><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Supervisor</label><select id="preview-supervisor" style="width: 100%; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; cursor: pointer;" onchange="renderPreviewJustificacionMultiple()"></select></div>
+<div style="grid-column: span 2;"><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Observaciones</label><textarea id="preview-observaciones" style="width: 100%; min-height:70px; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; resize:vertical;" placeholder="Observaciones comunes para el lote" oninput="renderPreviewJustificacionMultiple()"></textarea></div>
+</div>
+<div id="preview-justificacion-lista" style="max-height: 320px; overflow:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px;"></div>
+<button id="btn-confirmar-justificacion-preview" class="btn-modal btn-modal-primary" type="button" disabled>Confirmar guardado</button>
+<button class="btn-modal btn-modal-secondary" type="button" onclick="cerrarModal('modalPreviewJustificacion')">Cerrar</button>
+</div>
+</div>
 <div id="modalDiarioOperativo" class="modal-overlay">
 <div class="modal-content" style="border-top: 6px solid var(--primary); max-width: 760px; width: 100%;">
 <p class="modal-title">Diario Operativo</p>
@@ -257,7 +271,7 @@
 <span><b>Justificadas:</b> <span id="res-aus-just">0</span></span>
 <span><b>Total:</b> <span id="res-aus-total">0</span></span>
 </div>
-<button id="btn-justificar-seleccionadas" class="btn-modal btn-modal-primary" type="button" disabled title="Disponible en la siguiente fase">Justificar seleccionadas (0)</button>
+<button id="btn-justificar-seleccionadas" class="btn-modal btn-modal-primary" type="button" disabled onclick="abrirPreviewJustificacionMultiple()">Justificar seleccionadas (0)</button>
 </div>
 </div>
 <div class="table-wrap">
@@ -1293,6 +1307,8 @@ function actualizarContadorSeleccionAusencias() {
 const btn = document.getElementById('btn-justificar-seleccionadas');
 if (!btn) return;
 btn.innerText = `Justificar seleccionadas (${g_ausenciasSeleccionadas.size})`;
+btn.disabled = g_ausenciasSeleccionadas.size === 0;
+btn.title = g_ausenciasSeleccionadas.size === 0 ? 'Selecciona al menos una ausencia' : 'Previsualizar justificación múltiple';
 }
 
 function toggleSeleccionAusencia(pin, seleccionado) {
@@ -1311,6 +1327,76 @@ document.querySelectorAll('#tabla-res tbody input[data-ausencia-select="true"]')
 input.checked = false;
 });
 actualizarContadorSeleccionAusencias();
+}
+
+function cargarSelectsPreviewJustificacion() {
+const tipoSelect = document.getElementById('preview-tipo-ausencia');
+const supervisorSelect = document.getElementById('preview-supervisor');
+if (tipoSelect) {
+    const tipoActual = tipoSelect.value;
+    tipoSelect.innerHTML = '';
+    g_tiposAusencia.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.tipo;
+        opt.innerText = item.tipo;
+        tipoSelect.appendChild(opt);
+    });
+    tipoSelect.value = tipoActual || (g_tiposAusencia[0] && g_tiposAusencia[0].tipo) || '';
+}
+if (supervisorSelect) {
+    const supervisorActual = supervisorSelect.value;
+    supervisorSelect.innerHTML = '<option value="">Sin supervisor</option>';
+    PIN_SUPERVISORES.forEach(pin => {
+        const opt = document.createElement('option');
+        opt.value = pin;
+        opt.innerText = pin;
+        supervisorSelect.appendChild(opt);
+    });
+    supervisorSelect.value = supervisorActual || '';
+}
+}
+
+function obtenerAusenciasSeleccionadasParaPreview() {
+const ausencias = obtenerAusenciasJustificables();
+return Array.from(g_ausenciasSeleccionadas)
+    .map(pin => ausencias.find(fila => String(fila.pin) === String(pin)))
+    .filter(Boolean);
+}
+
+function abrirPreviewJustificacionMultiple() {
+if (g_ausenciasSeleccionadas.size === 0) {
+    mostrarToast('Selecciona al menos una ausencia.');
+    return;
+}
+cargarSelectsPreviewJustificacion();
+renderPreviewJustificacionMultiple();
+const btnConfirmar = document.getElementById('btn-confirmar-justificacion-preview');
+if (btnConfirmar) btnConfirmar.disabled = true;
+document.getElementById('modalPreviewJustificacion').style.display = 'flex';
+}
+
+function renderPreviewJustificacionMultiple() {
+const cont = document.getElementById('preview-justificacion-lista');
+if (!cont) return;
+const tipo = document.getElementById('preview-tipo-ausencia')?.value || '';
+const supervisor = document.getElementById('preview-supervisor')?.value || '';
+const observaciones = document.getElementById('preview-observaciones')?.value || '';
+const ausencias = obtenerAusenciasSeleccionadasParaPreview();
+
+if (ausencias.length === 0) {
+    cont.innerHTML = '<div style="padding:14px; color:var(--text-muted); font-size:13px;">No hay ausencias seleccionadas disponibles para previsualizar.</div>';
+    return;
+}
+
+let html = '<table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="background:var(--bg); color:var(--text-muted); text-align:left;"><th style="padding:10px; border-bottom:1px solid var(--border);">Empleado</th><th style="padding:10px; border-bottom:1px solid var(--border);">Horario</th><th style="padding:10px; border-bottom:1px solid var(--border);">Resultado</th></tr></thead><tbody>';
+ausencias.forEach((ausencia, index) => {
+    const preview = crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, index);
+    const resultado = preview.ok ? 'Se creará' : (preview.motivo === 'Duplicada' ? 'Duplicada' : 'Error');
+    const detalle = !preview.ok && preview.motivo && preview.motivo !== resultado ? ` (${preview.motivo})` : '';
+    html += `<tr><td style="padding:10px; border-bottom:1px solid var(--border);"><b>${escapeHTML(ausencia.nombre || '')}</b><br><span style="color:var(--text-muted); font-size:12px;">${escapeHTML(ausencia.pin || '')}</span></td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(ausencia.horario || '')}</td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(resultado + detalle)}</td></tr>`;
+});
+html += '</tbody></table>';
+cont.innerHTML = html;
 }
 
 function renderResumenAusenciasOperativo(mostrar) {
