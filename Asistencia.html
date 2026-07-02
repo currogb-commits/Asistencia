@@ -182,6 +182,10 @@
     <div id="tipo-ausencia-error" style="font-size:12px; color:#d23; margin-top:8px;"></div>
 </div>
 <div id="inc-tab-historico" style="display:none;">
+<div style="margin-bottom:10px; padding:10px 12px; border:1px solid var(--border); border-left:4px solid var(--warning); border-radius:8px; background:var(--card); color:var(--text); font-size:13px;">
+<b>Modo local:</b> importa incidencias antes de empezar y exporta al terminar.
+<div id="inc-ultima-importacion" style="margin-top:4px; color:var(--text-muted); font-size:12px;">Última importación: sin registrar</div>
+</div>
 <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 <h3 style="font-size:14px; color:var(--text); margin:0;">Histórico de Incidencias</h3>
 <div style="display:flex; gap:8px;">
@@ -2175,6 +2179,7 @@ function abrirModalIncidencias() {
     renderTipoAusenciaSelect();
     renderTiposAusenciaUI();
     renderIncidencias();
+    renderUltimaImportacionIncidencias();
     mostrarTabIncidencias('registro');
     document.getElementById('modalIncidencias').style.display = 'flex';
 }
@@ -2188,6 +2193,7 @@ function mostrarTabIncidencias(tab) {
     Object.keys(tabs).forEach(key => {
         if (tabs[key]) tabs[key].style.display = key === tab ? 'block' : 'none';
     });
+    if (tab === 'historico') renderUltimaImportacionIncidencias();
 }
 
 function abrirJustificacionAusencia(pin) {
@@ -2298,19 +2304,28 @@ function eliminarIncidencia(id) {
     }
 }
 
+function renderUltimaImportacionIncidencias() {
+    const indicador = document.getElementById('inc-ultima-importacion');
+    if (!indicador) return;
+    const ultima = localStorage.getItem('wfm_incidencias_ultima_importacion');
+    indicador.innerText = `Última importación: ${ultima || 'sin registrar'}`;
+}
+
 function exportarIncidencias() {
-    const fecha = new Date().toISOString().slice(0, 10);
+    const ahora = new Date();
+    const fecha = ahora.toISOString().slice(0, 10);
+    const hora = `${String(ahora.getHours()).padStart(2, '0')}-${String(ahora.getMinutes()).padStart(2, '0')}`;
     const blob = new Blob([JSON.stringify(g_incidencias, null, 2)], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `asistencia_incidencias_${fecha}.json`;
+    a.download = `asistencia_incidencias_${fecha}_${hora}.json`;
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    mostrarToast('✅ Incidencias exportadas correctamente');
+    mostrarToast('✅ Incidencias exportadas correctamente. Copia este archivo a la carpeta compartida si trabajáis varios supervisores.');
 }
 
 function abrirImportarIncidencias() {
@@ -2348,7 +2363,9 @@ function importarIncidencias(file) {
 
         g_incidencias = incidenciasImportadas;
         guardarIncidenciasLocales();
+        localStorage.setItem('wfm_incidencias_ultima_importacion', new Date().toLocaleString('es-ES'));
         renderIncidencias();
+        renderUltimaImportacionIncidencias();
         mostrarToast('✅ Incidencias importadas correctamente');
     };
     reader.onerror = () => mostrarToast('⚠️ No se pudo leer el archivo de incidencias');
