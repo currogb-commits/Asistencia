@@ -57,7 +57,7 @@
 <div style="grid-column: span 2;"><label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Observaciones</label><textarea id="preview-observaciones" style="width: 100%; min-height:70px; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text); outline: none; font-size: 13px; resize:vertical;" placeholder="Observaciones comunes para el lote" oninput="renderPreviewJustificacionMultiple()"></textarea></div>
 </div>
 <div id="preview-justificacion-lista" style="max-height: 320px; overflow:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px;"></div>
-<button id="btn-confirmar-justificacion-preview" class="btn-modal btn-modal-primary" type="button" disabled>Confirmar guardado</button>
+<button id="btn-confirmar-justificacion-preview" class="btn-modal btn-modal-primary" type="button" disabled onclick="confirmarGuardadoJustificacionMultiple()">Confirmar guardado</button>
 <button class="btn-modal btn-modal-secondary" type="button" onclick="cerrarModal('modalPreviewJustificacion')">Cerrar</button>
 </div>
 </div>
@@ -329,6 +329,7 @@ let g_diarioOperativo = null;
 let g_controlDiario = null;
 let g_mapaPlantillaControlDiario = null;
 let g_ausenciasSeleccionadas = new Set();
+let g_previewJustificacionMultiple = [];
 
 const TIPOS_AUSENCIA_DEFAULT = [
     { tipo: 'Horas sindicales', codigo: 'HS' },
@@ -1370,33 +1371,58 @@ if (g_ausenciasSeleccionadas.size === 0) {
 }
 cargarSelectsPreviewJustificacion();
 renderPreviewJustificacionMultiple();
-const btnConfirmar = document.getElementById('btn-confirmar-justificacion-preview');
-if (btnConfirmar) btnConfirmar.disabled = true;
 document.getElementById('modalPreviewJustificacion').style.display = 'flex';
 }
 
 function renderPreviewJustificacionMultiple() {
 const cont = document.getElementById('preview-justificacion-lista');
 if (!cont) return;
+const btnConfirmar = document.getElementById('btn-confirmar-justificacion-preview');
 const tipo = document.getElementById('preview-tipo-ausencia')?.value || '';
 const supervisor = document.getElementById('preview-supervisor')?.value || '';
 const observaciones = document.getElementById('preview-observaciones')?.value || '';
 const ausencias = obtenerAusenciasSeleccionadasParaPreview();
+g_previewJustificacionMultiple = [];
 
 if (ausencias.length === 0) {
     cont.innerHTML = '<div style="padding:14px; color:var(--text-muted); font-size:13px;">No hay ausencias seleccionadas disponibles para previsualizar.</div>';
+    if (btnConfirmar) btnConfirmar.disabled = true;
     return;
 }
 
 let html = '<table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="background:var(--bg); color:var(--text-muted); text-align:left;"><th style="padding:10px; border-bottom:1px solid var(--border);">Empleado</th><th style="padding:10px; border-bottom:1px solid var(--border);">Horario</th><th style="padding:10px; border-bottom:1px solid var(--border);">Resultado</th></tr></thead><tbody>';
 ausencias.forEach((ausencia, index) => {
     const preview = crearIncidenciaDesdeAusencia(ausencia, tipo, supervisor, observaciones, index);
+    g_previewJustificacionMultiple.push({ ausencia, preview });
     const resultado = preview.ok ? 'Se creará' : (preview.motivo === 'Duplicada' ? 'Duplicada' : 'Error');
     const detalle = !preview.ok && preview.motivo && preview.motivo !== resultado ? ` (${preview.motivo})` : '';
     html += `<tr><td style="padding:10px; border-bottom:1px solid var(--border);"><b>${escapeHTML(ausencia.nombre || '')}</b><br><span style="color:var(--text-muted); font-size:12px;">${escapeHTML(ausencia.pin || '')}</span></td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(ausencia.horario || '')}</td><td style="padding:10px; border-bottom:1px solid var(--border);">${escapeHTML(resultado + detalle)}</td></tr>`;
 });
 html += '</tbody></table>';
 cont.innerHTML = html;
+if (btnConfirmar) btnConfirmar.disabled = !g_previewJustificacionMultiple.some(item => item.preview && item.preview.ok);
+}
+
+function confirmarGuardadoJustificacionMultiple() {
+const validas = g_previewJustificacionMultiple
+    .map(item => item.preview)
+    .filter(preview => preview && preview.ok && preview.incidencia);
+const omitidas = g_previewJustificacionMultiple.length - validas.length;
+
+if (validas.length === 0) {
+    mostrarToast('No hay incidencias válidas para guardar.');
+    return;
+}
+
+validas.forEach(preview => {
+    g_incidencias.push(preview.incidencia);
+});
+guardarIncidenciasLocales();
+renderIncidencias();
+limpiarSeleccionAusencias();
+g_previewJustificacionMultiple = [];
+cerrarModal('modalPreviewJustificacion');
+mostrarToast(`Justificación múltiple guardada: creadas ${validas.length}, omitidas ${omitidas}. Vuelve a cruzar para actualizar tabla, WhatsApp y Control Diario.`);
 }
 
 function renderResumenAusenciasOperativo(mostrar) {
