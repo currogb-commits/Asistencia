@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Asistencia WFM v1.0.1 - Manual de Usuario</title>
+<style>
+@page {
+    size: A4;
+    margin: 24mm 18mm 21mm;
+    @bottom-left { content: "Asistencia WFM v1.0.1"; font-size: 9pt; color: #607086; }
+    @bottom-center { content: "Manual de Usuario"; font-size: 9pt; color: #607086; }
+    @bottom-right { content: counter(page); font-size: 9pt; color: #607086; }
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    color: #1f2937;
+    background: #ffffff;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.6pt;
+    line-height: 1.55;
+}
+h1, h2, h3 { color: #243447; line-height: 1.18; margin: 0; }
+h1 { font-size: 32pt; letter-spacing: -0.04em; }
+h2 { font-size: 19pt; margin-bottom: 7mm; padding-bottom: 3mm; border-bottom: 1px solid #d7dee8; }
+h3 { font-size: 10.5pt; margin: 5mm 0 2mm; text-transform: uppercase; letter-spacing: 0.07em; }
+p { margin: 0 0 3mm; }
+ul, ol { margin: 0 0 4mm 6mm; padding: 0; }
+li { margin-bottom: 1.5mm; }
+.page { page-break-after: always; }
+.cover {
+    min-height: 250mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid #d7dee8;
+    padding: 18mm;
+}
+.cover .subtitle { font-size: 15pt; margin-top: 6mm; color: #42526b; }
+.cover .meta { margin-top: 18mm; color: #42526b; }
+.cover .meta strong { display: block; color: #243447; margin-bottom: 2mm; }
+.cover .claim { margin-top: 18mm; font-size: 13pt; font-style: italic; color: #42526b; }
+.divider { width: 28mm; height: 1mm; margin: 14mm auto; background: #243447; border-radius: 999px; }
+.toc ol { columns: 2; column-gap: 16mm; list-style-position: inside; }
+.toc li { break-inside: avoid; padding: 1.5mm 0; border-bottom: 1px solid #edf1f6; }
+.chapter { page-break-before: always; break-before: page; }
+.chapter h2 { break-after: avoid; }
+.capture-placeholder {
+    margin: 7mm 0;
+    padding: 8mm;
+    min-height: 58mm;
+    border: 1.5px dashed #8fa0b7;
+    border-radius: 4mm;
+    background: #f7f9fc;
+    color: #334155;
+    break-inside: avoid;
+}
+.capture-placeholder strong {
+    display: block;
+    font-size: 12pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #243447;
+    margin-bottom: 4mm;
+}
+.capture-placeholder .name { font-weight: 700; margin-bottom: 2mm; }
+.capture-placeholder::after {
+    content: "Tamaño recomendado: ancho completo del área útil, formato 16:9 o recorte equivalente.";
+    display: block;
+    margin-top: 4mm;
+    padding-top: 3mm;
+    border-top: 1px solid #d7dee8;
+    color: #607086;
+    font-size: 9.5pt;
+}
+.info-box {
+    margin: 2mm 0 4mm;
+    padding: 4mm 5mm;
+    border-radius: 3mm;
+    break-inside: avoid;
+}
+.info-box strong { display: block; margin-bottom: 1.5mm; color: #243447; }
+.info-box p, .info-box ul { margin-bottom: 0; }
+.info-box.tip { border-left: 3px solid #2563eb; background: #eff6ff; }
+.info-box.error { border-left: 3px solid #d97706; background: #fffbeb; }
+.info-box.obs { border-left: 3px solid #64748b; background: #f8fafc; }
+.section-content { break-inside: avoid; }
+.history-entry {
+    margin: 6mm 0;
+    padding: 5mm;
+    border-left: 3px solid #243447;
+    background: #f8fafc;
+    break-inside: avoid;
+}
+.credits {
+    min-height: 230mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+.credits h2 { border-bottom: none; margin-bottom: 8mm; }
+.credits p { font-size: 12pt; color: #42526b; }
+.credits .product { font-size: 18pt; color: #243447; font-weight: 700; margin-bottom: 3mm; }
+.footer-note {
+    margin-top: 8mm;
+    color: #607086;
+    font-size: 9.5pt;
+}
+</style>
+</head>
+<body>
+<section class="cover page">
+    <h1>ASISTENCIA WFM</h1>
+    <p class="subtitle">Aplicación de control de asistencia diaria</p>
+    <p>Manual de Usuario</p>
+    <p>Versión 1.0.1</p>
+    <div class="divider"></div>
+    <div class="meta">
+        <strong>Desarrollo funcional</strong>
+        <p>Francisco García Blanco</p>
+        <p>Supervisor A</p>
+        <p>Servicio Salud Responde</p>
+        <p>Julio 2026</p>
+    </div>
+    <p class="claim">Centraliza el control de asistencia del turno desde una única aplicación.</p>
+</section>
+
+<section class="toc page">
+    <h2>Índice</h2>
+    <ol>
+        <li>Introducción</li>
+        <li>Primer uso</li>
+        <li>Trabajo compartido (BBDD)</li>
+        <li>Cruce de datos</li>
+        <li>Panel del turno</li>
+        <li>Gestión de incidencias</li>
+        <li>Plantilla de empleados</li>
+        <li>Bandeja de franja</li>
+        <li>WhatsApp</li>
+        <li>Diario Operativo</li>
+        <li>Control Diario</li>
+        <li>Buenas prácticas</li>
+        <li>Resolución de problemas</li>
+        <li>Preguntas frecuentes</li>
+        <li>Histórico del documento</li>
+        <li>Créditos</li>
+    </ol>
+</section>
+
+<main>
+    <section class="chapter">
+        <h2>1. Introducción</h2>
+        <h3>Objetivo</h3>
+        <p>Presentar Asistencia WFM y el alcance de este manual.</p>
+        <h3>Descripción</h3>
+        <p>Asistencia WFM ayuda al supervisor a controlar el turno, cruzar PGPlanning con Avaya, registrar incidencias y preparar salidas operativas.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Vista general de la aplicación</p><p>Debe mostrar la pantalla principal con las zonas de trabajo y los accesos superiores.</p></div>
+        <h3>Cómo utilizar la función</h3>
+        <ol><li>Abre la aplicación.</li><li>Revisa los accesos principales.</li><li>Lee el flujo recomendado antes de comenzar el turno.</li></ol>
+        <h3>Resultado esperado</h3><p>El supervisor identifica para qué sirve la herramienta y cómo se organiza el trabajo.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Usa este manual como guía rápida durante el turno.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Empezar a registrar incidencias sin cargar datos actualizados.</li><li>Interpretar resultados sin comprobar la hora de consulta.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>Las capturas definitivas se insertarán antes de la publicación final del PDF.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>2. Primer uso</h2>
+        <h3>Objetivo</h3><p>Arrancar el turno con la información compartida y los datos de asistencia actualizados.</p>
+        <h3>Descripción</h3><p>El primer uso debe seguir siempre el mismo orden para evitar conflictos y lecturas incompletas.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Pantalla principal</p><p>Debe mostrar PGPlanning, Avaya, botones de BBDD, CRUZAR DATOS y Panel del Turno.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Conecta la BBDD compartida o créala si es la primera vez.</li><li>Actualiza BBDD.</li><li>Pega el cuadrante PGPlanning.</li><li>Pega los logados de Avaya.</li><li>Pulsa CRUZAR DATOS.</li><li>Revisa el Panel del Turno y gestiona incidencias.</li></ol>
+        <h3>Resultado esperado</h3><p>La aplicación muestra estado del turno, ausencias, incidencias y salidas operativas.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Actualiza la BBDD antes de registrar cualquier incidencia.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Cruzar datos sin Avaya actualizado.</li><li>No guardar BBDD tras modificar incidencias.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>Este flujo es la base del uso diario.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>3. Trabajo compartido (BBDD)</h2>
+        <h3>Objetivo</h3><p>Permitir que varios supervisores compartan incidencias sin perder cambios.</p>
+        <h3>Descripción</h3><p>La BBDD compartida centraliza las incidencias y debe actualizarse al comenzar y guardarse al terminar.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Trabajo compartido BBDD</p><p>Debe mostrar Crear BBDD, Conectar BBDD, Actualizar BBDD, Guardar BBDD y estado de conexión.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Crea la BBDD si no existe.</li><li>Conecta la BBDD compartida.</li><li>Actualiza al comenzar.</li><li>Registra o edita incidencias.</li><li>Guarda al terminar.</li></ol>
+        <h3>Resultado esperado</h3><p>Los cambios quedan disponibles para el resto de supervisores.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Si hay conflicto, actualiza antes de continuar.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Trabajar sin BBDD conectada.</li><li>Modificar incidencias y no guardar.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>La BBDD compartida es prioritaria en trabajo simultáneo.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>4. Cruce de datos</h2>
+        <h3>Objetivo</h3><p>Comparar planificación y presencia real.</p>
+        <h3>Descripción</h3><p>El cruce analiza PGPlanning y Avaya para clasificar la situación de cada empleado.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Cruce de datos</p><p>Debe mostrar las cajas de entrada y la tabla de resultados tras pulsar CRUZAR DATOS.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Pega PGPlanning completo.</li><li>Pega Avaya actualizado.</li><li>Comprueba la hora.</li><li>Pulsa CRUZAR DATOS.</li><li>Revisa estados y ausencias.</li></ol>
+        <h3>Resultado esperado</h3><p>Cada empleado queda clasificado por turno, estado Avaya y situación actual.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Repite el cruce tras registrar cambios importantes.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Usar datos incompletos.</li><li>Interpretar el resultado con hora incorrecta.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>El cruce es la base del resto de salidas.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>5. Panel del turno</h2>
+        <h3>Objetivo</h3><p>Ofrecer una lectura rápida de cobertura, ausencias y acciones necesarias.</p>
+        <h3>Descripción</h3><p>El panel resume el estado operativo tras el cruce.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Panel del Turno</p><p>Debe mostrar tarjetas, contadores, avisos y acciones rápidas.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Cruza datos.</li><li>Lee tarjetas y contadores.</li><li>Revisa avisos.</li><li>Abre incidencias si procede.</li><li>Vuelve a cruzar tras cambios.</li></ol>
+        <h3>Resultado esperado</h3><p>El supervisor identifica prioridades del turno.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Consulta el panel antes de revisar detalle por empleado.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Tomar decisiones con datos antiguos.</li><li>Ignorar avisos de ausencia.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>El panel depende del último cruce realizado.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>6. Gestión de incidencias</h2>
+        <h3>Objetivo</h3><p>Registrar, consultar y mantener ausencias e incidencias del turno.</p>
+        <h3>Descripción</h3><p>Las incidencias explican ausencias, situaciones futuras y cambios operativos.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Centro de incidencias</p><p>Debe mostrar formulario, filtros, agenda, incidencias activas y futuras.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Localiza la ausencia.</li><li>Justifica una o varias ausencias.</li><li>Indica tipo, fecha, horario y observaciones.</li><li>Guarda la incidencia.</li><li>Guarda la BBDD si trabajas compartido.</li></ol>
+        <h3>Resultado esperado</h3><p>La incidencia queda disponible para panel, WhatsApp, Diario Operativo y Control Diario.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Busca antes de crear una incidencia nueva.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Duplicar registros.</li><li>Dejar incidencias abiertas sin seguimiento.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>El histórico permite revisar incidencias pasadas.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>7. Plantilla de empleados</h2>
+        <h3>Objetivo</h3><p>Mantener empleados y PIN correctamente identificados.</p>
+        <h3>Descripción</h3><p>La plantilla ayuda a mejorar el cruce y evita errores de identificación.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Plantilla de empleados</p><p>Debe mostrar formulario, buscador, sincronización y listado.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Abre Plantilla de empleados.</li><li>Sincroniza CSV si procede.</li><li>Busca por PIN o nombre.</li><li>Edita datos necesarios.</li><li>Guarda el empleado.</li></ol>
+        <h3>Resultado esperado</h3><p>La aplicación reconoce empleados con mayor precisión.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Revisa siempre el PIN antes que el nombre.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>PIN incompleto.</li><li>Duplicar empleados.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>La plantilla debe mantenerse actualizada.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>8. Bandeja de franja</h2>
+        <h3>Objetivo</h3><p>Revisar entradas, salidas y ausencias por franja.</p>
+        <h3>Descripción</h3><p>La bandeja ayuda a actuar sobre movimientos próximos o recientes.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Bandeja de franja</p><p>Debe mostrar entradas, salidas, ausencias y acciones inmediatas.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Cruza con la hora correcta.</li><li>Abre Bandeja de franja.</li><li>Revisa entradas y salidas.</li><li>Actúa sobre pendientes.</li><li>Registra incidencias si procede.</li></ol>
+        <h3>Resultado esperado</h3><p>La franja queda revisada y con casos pendientes identificados.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Úsala antes de cambios de hora importantes.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Consultar con hora incorrecta.</li><li>No actualizar Avaya.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>La bandeja se basa en el último cruce.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>9. WhatsApp</h2>
+        <h3>Objetivo</h3><p>Preparar un resumen operativo para comunicación rápida.</p>
+        <h3>Descripción</h3><p>WhatsApp genera un texto listo para copiar y enviar.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Informe de WhatsApp</p><p>Debe mostrar el texto generado y el botón de copia.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Cruza datos actualizados.</li><li>Revisa incidencias.</li><li>Abre WhatsApp.</li><li>Comprueba el texto.</li><li>Copia al portapapeles.</li></ol>
+        <h3>Resultado esperado</h3><p>Mensaje preparado con la situación del turno.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Genéralo después de revisar ausencias.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Enviar texto antiguo.</li><li>No revisar incidencias antes de copiar.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>El texto depende del estado actual de la aplicación.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>10. Diario Operativo</h2>
+        <h3>Objetivo</h3><p>Mostrar información estructurada para seguimiento del turno.</p>
+        <h3>Descripción</h3><p>El Diario Operativo recoge datos relevantes para consulta o traspaso.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Diario Operativo</p><p>Debe mostrar bloques de información y opción de descarga JSON.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Cruza datos actualizados.</li><li>Registra incidencias relevantes.</li><li>Abre Diario Operativo.</li><li>Revisa la información.</li><li>Descarga JSON si procede.</li></ol>
+        <h3>Resultado esperado</h3><p>Información operativa ordenada y reutilizable.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Genéralo tras las revisiones principales.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Abrirlo antes de registrar cambios.</li><li>Descargar una versión antigua.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>No sustituye a la BBDD compartida.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>11. Control Diario</h2>
+        <h3>Objetivo</h3><p>Preparar datos para control posterior en LibreOffice Calc.</p>
+        <h3>Descripción</h3><p>Control Diario permite revisar y copiar salidas estructuradas.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Control Diario</p><p>Debe mostrar previsualización, copiar JSON, copiar tabla y análisis de plantilla.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Cruza datos actualizados.</li><li>Abre Control Diario.</li><li>Revisa previsualización.</li><li>Copia JSON o tabla.</li><li>Pega en LibreOffice Calc si procede.</li></ol>
+        <h3>Resultado esperado</h3><p>Salida preparada para revisión o hoja de cálculo.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Comprueba incidencias antes de copiar.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Copiar antes del último cruce.</li><li>Confundir JSON con tabla.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>La salida debe revisarse antes de uso operativo.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>12. Buenas prácticas</h2>
+        <h3>Objetivo</h3><p>Reducir errores durante el uso diario.</p>
+        <h3>Descripción</h3><p>Las buenas prácticas ayudan a trabajar de forma consistente entre supervisores.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Flujo recomendado</p><p>Debe mostrar una secuencia visual de actualización, cruce, incidencias y guardado.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Actualiza BBDD al comenzar.</li><li>Usa datos recientes.</li><li>Registra incidencias importantes.</li><li>Guarda BBDD tras cambios.</li><li>Revisa salidas antes de comunicar.</li></ol>
+        <h3>Resultado esperado</h3><p>Trabajo diario más estable y trazable.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Ante duda, actualiza antes de modificar.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Trabajar con datos antiguos.</li><li>No guardar después de cambios.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>Estas pautas deben seguirse especialmente en turnos compartidos.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>13. Resolución de problemas</h2>
+        <h3>Objetivo</h3><p>Resolver incidencias habituales de uso.</p>
+        <h3>Descripción</h3><p>Este capítulo resume comprobaciones rápidas cuando algo no cuadra.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Avisos y estados</p><p>Debe mostrar ejemplos de filtros, BBDD y estados de incidencia.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Comprueba conexión BBDD.</li><li>Actualiza BBDD.</li><li>Revisa filtros activos.</li><li>Vuelve a cruzar datos.</li><li>Comprueba hora de consulta.</li></ol>
+        <h3>Resultado esperado</h3><p>El supervisor identifica la causa más probable del problema.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Antes de crear incidencias nuevas, revisa si ya existen.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Confundir filtros con ausencia de datos.</li><li>Interpretar salidas desactualizadas.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>Si persiste el problema, conserva los datos de entrada usados.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>14. Preguntas frecuentes</h2>
+        <h3>Objetivo</h3><p>Responder dudas habituales durante el turno.</p>
+        <h3>Descripción</h3><p>Preguntas rápidas para supervisores en uso diario.</p>
+        <div class="capture-placeholder"><strong>Captura pendiente</strong><p class="name">Preguntas frecuentes</p><p>Debe mostrar una vista de ayuda o sección final del manual.</p></div>
+        <h3>Cómo utilizar la función</h3><ol><li>Busca la pregunta relacionada.</li><li>Aplica la recomendación.</li><li>Actualiza BBDD si trabajan varios supervisores.</li><li>Guarda BBDD si has cambiado incidencias.</li></ol>
+        <h3>Resultado esperado</h3><p>Dudas resueltas sin detener el flujo de trabajo.</p>
+        <h3>Consejos</h3><div class="info-box tip"><strong>💡 Consejo</strong><p>Si dos supervisores trabajan a la vez, ambos deben actualizar antes de modificar.</p></div>
+        <h3>Errores frecuentes</h3><div class="info-box error"><strong>⚠ Error frecuente</strong><ul><li>Olvidar guardar BBDD.</li><li>No revisar filtros cuando no aparecen incidencias.</li></ul></div>
+        <h3>Observaciones</h3><div class="info-box obs"><strong>ℹ Observación</strong><p>Las respuestas se ampliarán con el uso real en producción.</p></div>
+    </section>
+
+    <section class="chapter">
+        <h2>15. Histórico del documento</h2>
+        <div class="history-entry">
+            <h3>Versión 1.0.1</h3>
+            <p>Primera versión estable publicada para producción.</p>
+        </div>
+    </section>
+
+    <section class="chapter credits">
+        <h2>Créditos</h2>
+        <p class="product">Asistencia WFM</p>
+        <p>Aplicación de control de asistencia diaria</p>
+        <div class="divider"></div>
+        <p><strong>Desarrollo funcional</strong></p>
+        <p>Francisco García Blanco</p>
+        <p>Supervisor A</p>
+        <p>Servicio Salud Responde</p>
+        <p>Julio 2026</p>
+        <p class="footer-note">Este documento corresponde a la versión estable 1.0.1 de Asistencia WFM.</p>
+    </section>
+</main>
+
+</body>
+</html>
