@@ -15,20 +15,47 @@
 </div>
 </div>
 <div id="modalAyuda" class="modal-overlay">
-<div class="modal-content" style="border-top: 6px solid var(--primary);">
-<p class="modal-title"> Manual de Usuario v5.0</p>
-<ul class="help-list">
-<li><b>1. Pegar Datos:</b> Copia el cuadrante PGPlanning en el recuadro 1 y la tabla de logados de Avaya en el recuadro 2. Los PINs se limpian de ceros automáticamente.</li>
-<li><b>2. Hora de Consulta:</b> El cruce usa la hora actual en tiempo real. Pincha el reloj para simular cualquier hora.</li>
-<li><b>3. Supervisores:</b> Gestiona la lista de PINs de supervisores desde el botón SUP. Los cambios se guardan automáticamente.</li>
-<li><b>4. Línea GTS:</b> Turnos con <b>GTS</b> en su horario (ej. 06:00-14:00 - GTS) entre 08:00 y 20:00 se marcan como Línea GTS (morado). Fuera de ese horario, cuentan como gestores normales.</li>
-<li><b>5. Alarma 30m:</b> Solicita permiso de audio al activarse. Cada 30 minutos suena un pitido y aparece aviso en pantalla.</li>
-<li><b>6. Buscador:</b> Filtra la tabla en tiempo real por PIN o nombre del empleado.</li>
-<li><b>7. Ordenar Tabla:</b> Haz clic en cualquier cabecera de columna para ordenar ascendente/descendente.</li>
-<li><b>8. Exportar CSV:</b> Descarga el resultado del cruce como archivo Excel-compatible.</li>
-<li><b>9. Historial:</b> Los últimos 3 cruces quedan guardados abajo para consulta rápida.</li>
+<div class="modal-content manual-modal" role="dialog" aria-modal="true" aria-labelledby="manual-title">
+<div class="manual-header">
+<div>
+<p class="manual-kicker">Manual interactivo</p>
+<h2 id="manual-title" class="manual-title">Manual de Asistencia</h2>
+</div>
+<button class="manual-close" type="button" onclick="cerrarModal('modalAyuda')" aria-label="Cerrar manual">Cerrar</button>
+</div>
+<div class="manual-layout">
+<nav class="manual-menu" aria-label="Secciones del manual">
+<button class="manual-menu-item" type="button" data-manual-index="0">🚀 Primer uso</button>
+<button class="manual-menu-item" type="button" data-manual-index="1">🕒 Flujo del turno</button>
+<button class="manual-menu-item" type="button" data-manual-index="2">🖥 Pantalla principal</button>
+<button class="manual-menu-item" type="button" data-manual-index="3">🔄 Cruce de datos</button>
+<button class="manual-menu-item" type="button" data-manual-index="4">📋 Panel del turno</button>
+<button class="manual-menu-item" type="button" data-manual-index="5">👥 Gestión de ausencias</button>
+<button class="manual-menu-item" type="button" data-manual-index="6">🗂 Centro de incidencias</button>
+<button class="manual-menu-item" type="button" data-manual-index="7">👤 Plantilla de empleados</button>
+<button class="manual-menu-item" type="button" data-manual-index="8">💾 Trabajo compartido (BBDD)</button>
+<button class="manual-menu-item" type="button" data-manual-index="9">📱 WhatsApp</button>
+<button class="manual-menu-item" type="button" data-manual-index="10">📊 Diario Operativo</button>
+<button class="manual-menu-item" type="button" data-manual-index="11">📈 Control Diario</button>
+<button class="manual-menu-item" type="button" data-manual-index="12">❓ Preguntas frecuentes</button>
+<button class="manual-menu-item" type="button" data-manual-index="13">ℹ Acerca de</button>
+</nav>
+<section class="manual-content" aria-live="polite">
+<h3 id="manual-section-title">Tema en construcción</h3>
+<p id="manual-section-text">Tema en construcción</p>
+<div class="manual-placeholder-image" aria-hidden="true">Espacio preparado para imagen</div>
+<ul class="manual-placeholder-list">
+<li>Elemento de lista temporal</li>
+<li>Elemento de lista temporal</li>
 </ul>
-<button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalAyuda')">Cerrar Manual</button>
+<div class="manual-note"><strong>Nota:</strong> Tema en construcción.</div>
+</section>
+</div>
+<div class="manual-actions">
+<button class="btn-modal btn-modal-secondary" type="button" id="manual-prev">Anterior</button>
+<button class="btn-modal btn-modal-primary" type="button" id="manual-next">Siguiente</button>
+<button class="btn-modal btn-modal-secondary" type="button" onclick="cerrarModal('modalAyuda')">Cerrar</button>
+</div>
 </div>
 </div>
 <div id="modalWP" class="modal-overlay">
@@ -257,7 +284,7 @@
 <!-- INCIDENCIAS v6 - FIN -->
 <button class="btn-top" onclick="abrirModalSup()"> SUP</button>
 <button class="btn-top" id="btn-darkmode" onclick="toggleDarkMode()"> Oscuro</button>
-<button class="btn-top" onclick="document.getElementById('modalAyuda').style.display='flex'">? Ayuda</button>
+<button class="btn-top" onclick="abrirManual()">📘 Manual</button>
 </div>
 </div>
 
@@ -351,6 +378,7 @@
 <script src="js/business.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
+<script src="js/manual.js"></script>
 <script>
 // ============================================================
 // LISTA DE SUPERVISORES (editable desde UI, persistida en localStorage)
