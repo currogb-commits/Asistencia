@@ -13,10 +13,14 @@ Todas las modificaciones importantes del proyecto Asistencia se registrarán en 
 * Hoja de ruta ordenada para la evolución desde V6.1 hasta V7.
 * Manual técnico breve del estado actual de la aplicación.
 * Guía básica de uso para supervisores.
+* Incorporación de infraestructura Playwright.
+* Smoke test sintético.
+* Primer E2E de arranque real.
+* Validación Chrome y Edge.
 
 ### Notas
 
-* No se modifica la lógica funcional de la aplicación.
+* Sin cambios de lógica funcional.
 * No se modifica `Asistencia.html`.
 * Esta versión prepara el proyecto para futuras extracciones controladas de CSS y JavaScript.
 

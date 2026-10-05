@@ -1,2 +1,7 @@
 asistencia_incidencias_*.json
 diario_operativo_*.json
+
+# Node / Playwright
+node_modules/
+playwright-report/
+test-results/

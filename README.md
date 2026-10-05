@@ -122,6 +122,17 @@ Antes de hacer commit se debe comprobar:
 7. Confirmar que solo se han modificado los archivos previstos.
 8. Hacer commit solo cuando la aplicación esté estable y autorizado.
 
+### Pruebas automatizadas
+
+* Infraestructura de pruebas con **Playwright 1.63.0**.
+* Pruebas E2E ubicadas en `tests/e2e/`.
+* Comandos disponibles:
+  * `npm run test:e2e`
+  * `npm run test:e2e:chrome`
+  * `npm run test:e2e:edge`
+* El primer test automático valida el arranque de `Asistencia.html` sin errores JS.
+* Los fixtures manuales Avaya/Cuadrante continúan vigentes y todavía no han sido automatizados.
+
 ---
 
 # Estructura del proyecto
